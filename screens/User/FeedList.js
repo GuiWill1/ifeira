@@ -8,8 +8,8 @@ import {
     StatusBar,
     TextInput,
     Image,
-    Platform,
-    TouchableOpacity
+    Platform
+  
   } from 'react-native';
   
 import Firebase from '../../constants/Config';
@@ -24,7 +24,16 @@ const products = [];
 
 
 export default class FeedList extends Component {
-    
+    constructor(props){
+        super(props);
+       
+        this.state = {
+          
+            data:[]
+        }
+        this.renderRow = this.renderRow.bind(this);
+        this.pressRow = this.pressRow.bind(this);
+    }
     componentDidMount(){
         var text = ""
         
@@ -36,19 +45,11 @@ export default class FeedList extends Component {
     checkUserLoggedStatus = () =>{
 
     };
-    constructor(props){
-        super(props);
-       
-        this.state = {
-          
-            data:[]
-        }
-        this.renderRow = this.renderRow.bind(this);
-        this.pressRow = this.pressRow.bind(this);
-    }
+
     getItens(){
-        db.collection("Produtos").orderBy("nome").onSnapshot(snapshot =>{
+        db.collection("Produtos").where("visivel","==",true).onSnapshot(snapshot =>{
             let changes = snapshot.docChanges();
+            
             changes.forEach(change =>{
                 if(change.type == 'added'){
                     const { categoria,imagem, nome,unidadeMedida, preco, uidFornecedor } = change.doc.data();
@@ -116,7 +117,7 @@ export default class FeedList extends Component {
                                 {item.unidadeMedida}
                                 </Text>
                                 <Text style={styles.postPrice}>
-                                R$ {item.preco}
+                                R$ {item.preco},00
                                 </Text>
                             </Body>
                                 
@@ -127,7 +128,7 @@ export default class FeedList extends Component {
                 this.pressRow(item);
             }} >
                                     <Icon name='add' />
-                                    <Text>Adicionar</Text>
+                                    <Text style={{fontWeight:'bold'}}>Adicionar</Text>
                                 </Button>
                         </CardItem>
                     </Card>    
@@ -155,16 +156,7 @@ export default class FeedList extends Component {
                         }
                         }
                     />
-                       <View>
-      
-      
-      <TouchableOpacity onPress={() => alert('FAB clicked')} style={styles.fab}>
-      <View style={styles.badge}>
-      <Text style={styles.fabIcon}>2</Text>
-      </View>
-          <Text ><Icon name="md-cart" color="#fff"/></Text>
-        </TouchableOpacity>
-      </View>
+                    
         </SafeAreaView>
             
                  
@@ -184,7 +176,7 @@ const styles = StyleSheet.create({
     box:{
         alignItems: "center",
         backgroundColor: "#fff",
-        flexGrow: 1,
+        flexGrow: 0.5,
         margin: 2,
         padding: 2,
         flexBasis:0

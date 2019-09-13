@@ -6,7 +6,11 @@ import TabBarIcon from '../components/TabBarIcon';
 import HomeScreen from '../screens/User/HomeScreen';
 import LinksScreen from '../screens/User/LinksScreen';
 import SettingsScreen from '../screens/User/SettingsScreen';
-
+import ProdutoScreen from '../screens/User/ProdutosCategoria';
+import CategoriaScreen from '../screens/User/Categoria';
+import CategoriaNavigator from './CategoriaNavigator';
+import Feed from '../screens/User/Feed';
+import FeedList from '../screens/User/FeedList';
 
 const config = Platform.select({
 
@@ -15,7 +19,10 @@ const config = Platform.select({
 
 const HomeStack = createStackNavigator(
   {
-    Home: HomeScreen,
+    Home:HomeScreen,
+    
+ 
+    
   },
   config
 );
@@ -70,8 +77,27 @@ SettingsStack.navigationOptions = {
 
 SettingsStack.path = '';
 
+const CategoriaStack = createStackNavigator(
+  {
+    Categoria: CategoriaScreen,
+    Categoria: CategoriaScreen,
+    Produto:ProdutoScreen,
+  },
+  config
+);
+
+CategoriaStack.navigationOptions = {
+  tabBarLabel: 'Pesquisar',
+  tabBarIcon: ({ focused }) => (
+    <TabBarIcon focused={focused} name={Platform.OS === 'ios' ? 'ios-search' : 'md-search'} />
+  ),
+};
+
+CategoriaStack.path = '';
+
 const tabNavigator = createBottomTabNavigator({
   HomeStack,
+  CategoriaStack,
   LinksStack,
   SettingsStack,
 });

@@ -26,7 +26,7 @@ class SplashScreen extends Component{
                         }else{
                             
                             this.props.navigation.navigate('Main')
-
+                            
                         }
                     })
                     

@@ -142,7 +142,7 @@ class Cadastro extends Component{
                             />
                             
                             </View> 
-                            <Text style={{fontSize:9,color:"#273",marginTop:-5,marginLeft:12}}>De preferência WhatsApp!</Text>
+                            <Text style={{fontSize:12,color:"#273",marginTop:-5,marginLeft:10}}>De preferência WhatsApp!</Text>
         </View>
 
         <View style={styles.inputWrap}>

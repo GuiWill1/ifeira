@@ -3,10 +3,9 @@ import { createAppContainer, createSwitchNavigator } from 'react-navigation';
 
 import MainTabNavigator from './MainTabNavigator';
 import SplashScreen from '../screens/SplashScreen';
-import HomeScreen from '../screens/User/HomeScreen';
 import LoginNavigator from './LoginNavigator';
 import HomeAdmNavigator from './admNavigator/AdmTabNavigator';
-
+import CategoriaNavigator from './CategoriaNavigator';
 
 export default createAppContainer(
   createSwitchNavigator({
@@ -14,10 +13,10 @@ export default createAppContainer(
     SplashScreen : SplashScreen,
     Login:LoginNavigator,
     Main: MainTabNavigator,
-    HomeScreen:HomeScreen,
     HomeAdm:HomeAdmNavigator,
     
-  })
+  }),
+
 );
 
 

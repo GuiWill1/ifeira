@@ -34,7 +34,7 @@ class Login extends Component{
             //alert("login:"+user.email)
         })
         try{
-            
+        
             firebase.auth().signInWithEmailAndPassword(email,senha)
             .then(function(user){
                 //alert(user.user.uid)
