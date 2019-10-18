@@ -19,7 +19,7 @@ class SplashScreen extends Component{
                 if (user){
                     let uid = firebase.auth().currentUser.uid
                    
-                    db.collection("Fornecedor").doc(uid).get()
+                    db.collection("Vendedor").doc(uid).get()
                     .then((doc) => {
                         if (doc.exists){
                             this.props.navigation.navigate('HomeAdm')

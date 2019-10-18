@@ -1,21 +1,22 @@
 import React,{Component}from 'react';
-import { Container, Header, Content, Card, CardItem, Text, Body, Button, Icon} from 'native-base';
+import { Container, Header, Content, Card, CardItem, Text, Body, Button, Icon, Separator} from 'native-base';
 import {
   SafeAreaView,
   StyleSheet,
   View,
-  
+  Modal,
   Image,
-  Platform
-
+  Platform,
+  TouchableOpacity,
+  ScrollView,
+  AsyncStorage,
+  ImageBackground
 } from 'react-native';
-import Feed from "./Feed";
-import Categoria from './Categoria'
-import FeedList from './FeedList';
+
 
 import Firebase from '../../constants/Config';
 import '@firebase/firestore';
-import { TouchableHighlight, FlatList } from 'react-native-gesture-handler';
+import {  FlatList } from 'react-native-gesture-handler';
 
 
 
@@ -26,39 +27,89 @@ const products = [];
 
 
 export default class HomeScreen extends Component {
+  static navigationOptions = {
+    
+    headerTitle: 'Produtos',
+  
+    ...Platform.select({
+     
+      android: {
+        headerTintColor: '#fff',
+    
+    headerStyle: {
+      backgroundColor: '#F05641',
+      //#F15641
+      //#E64A19
+     
+    },
+      },
+    }),
+  };
+ 
   constructor(props){ 
     super(props) 
-    this.state = {
-          
-      data:[]
-  }
-  this.renderRow = this.renderRow.bind(this);
-  this.pressRow = this.pressRow.bind(this);
-  }
-  componentDidMount(){
-    var text = ""
-    
     this.getItens();
+    
+    this.state = {
+      data:[],
+      itensAdded:[],
+      countItensCarrinho:0,
+      refresh:false
+  }
+  
+
+  this.renderRow = this.renderRow.bind(this);
+
+  }
+  componentWillMount(){
+    products.length=0
+    this.getItensCarrinho()
+    
 }
+
 getItens(){
   db.collection("Produtos").where("visivel","==",true).onSnapshot(snapshot =>{
       let changes = snapshot.docChanges();
       
       changes.forEach(change =>{
           if(change.type == 'added'){
-              const { categoria,imagem, nome,unidadeMedida, preco, uidFornecedor } = change.doc.data();
+            console.log("Adicionou")
+            
+              const { categoria,imagem, nome,unidadeMedida, preco, uidFornecedor,visivel } = change.doc.data();
               const uid =  change.doc.id;
-              products.push({ uid, categoria,imagem, nome, preco,unidadeMedida, uidFornecedor });
+              
+                    products.push({ uid, categoria,imagem, nome, preco,unidadeMedida, uidFornecedor,visivel });
+                    
+            
+       
+              
           }else if(change.type == 'modified'){
-             
-             const { categoria,imagem, nome,unidadeMedida, preco, uidFornecedor } = change.doc.data();
+            console.log("modificou")
+             const { categoria,imagem, nome,unidadeMedida, preco, uidFornecedor,visivel } = change.doc.data();
               const uid =  change.doc.id;
-              products.push({ uid, categoria,imagem, nome, preco,unidadeMedida, uidFornecedor });
+
+              for (let i in products) {
+                if(products[i].uid === change.doc.id){
+                 
+                    products[i] = {uid, categoria,imagem, nome, preco,unidadeMedida, uidFornecedor,visivel}
+                  
+               }
+              }
+
+              
+          }else if(change.type == 'removed'){
+            console.log("removeu",change.doc.id)
+            for (let i in products){
+              if(products[i].uid === change.doc.id){
+                products.splice(i,1)
+              }
+            }
           }
       });
       this.setState({
        
-          data: this.state.data = products
+          data: this.state.data = products,
+          refresh: true
       })
       
        
@@ -68,15 +119,32 @@ getItens(){
   })
  
 }
-pressRow(item){
-  alert("JSONobj:"+JSON.stringify(item))
+
+
+getItensCarrinho=()=>{
+  var user = Firebase.auth().currentUser 
+       
+  db.collection("Cliente").doc(user.uid).collection("Carrinho").onSnapshot(snapshot =>{
+    let changes = snapshot.docChanges();
+    var itens = snapshot.docs.length
+    this.setState({
+       
+      countItensCarrinho: this.state.countItensCarrinho = itens,
+      
+  })
+  });
+
+    
+}
+openCarrinho=()=>{
+  return(this.props.navigation.navigate('Carrinho'))
 }
 createRows(data, columns) {
   const rows = Math.floor(data.length / columns); // [A]
   let lastRowElements = data.length - rows * columns; // [B]
   while (lastRowElements !== columns) { // [C]
     data.push({ // [D]
-      uid: `empty-${lastRowElements}`,
+      id: `empty-${lastRowElements}`,
       nome: `empty-${lastRowElements}`,
       categoria: `empty-${lastRowElements}`,
       imagem: `empty-${lastRowElements}`,
@@ -89,6 +157,7 @@ createRows(data, columns) {
   }
   return data; // [F]
 }
+
 renderRow(item){
   return(
       <View style={styles.box}>
@@ -110,17 +179,19 @@ renderRow(item){
                           <Text>
                           {item.unidadeMedida}
                           </Text>
-                          <Text style={styles.postPrice}>
-                          R$ {item.preco},00
-                          </Text>
+                         <Text style={styles.postPrice}>
+                           R${item.preco.toFixed(2).replace(".",",")}
+                         </Text>
+                            
+                        
                       </Body>
                           
                       </CardItem>
                   </CardItem>
                   <CardItem footer>
-                          <Button iconLeft onPress={()=>{
-          this.pressRow(item);
-      }} >
+                          <Button iconLeft onPress={() => {
+                            this.props.navigation.navigate('Adicionar',{item:item})
+                  }}>
                               <Icon name='add' />
                               <Text style={{fontWeight:'bold'}}>Adicionar</Text>
                           </Button>
@@ -132,17 +203,43 @@ renderRow(item){
 }
     render(){
       const columns = 2;
+    
       return (
+       
+        
           <SafeAreaView>
+          
+            <ScrollView style={{height:'100%'}}>
+            
+        <View style={styles.row}>
+                <View style={styles.ButtonWrap}>
+                    <Button  style={styles.buttonCat} iconLeft onPress={()=>{this.props.navigation.navigate('Categoria')}} >
+                            <Icon name='grid' />
+                        <Text style={{fontWeight:'bold'}}>Categorias</Text>
+                    </Button>
+                    
+                </View>
+                <View style={styles.ButtonWrap}>
+                    <Button  style={styles.buttonCat} iconLeft onPress={()=>{this.props.navigation.navigate('Categoria')}} >
+                            <Icon name='search' />
+                        <Text style={{fontWeight:'bold'}}>Produtos</Text>
+                    </Button>
+                    
+                </View>
+                
+            </View>
+              
           
                  <FlatList 
                           style={styles.list}
-                          data={this.createRows(this.state.data,columns)}
+                          data={this.state.data}//createRows(this.state.data,columns)}
+                          extraData={this.state}
                           keyExtractor={item => item.uid}
                           numColumns={columns}
                           renderItem={({item}) => {
                               if(item.empty){
-                                  return <View style={{backgroundColor:"transparent"}}/>
+                                
+                                  return <View style={{backgroundColor:"#ff2"}}/>
                               }
                               return (this.renderRow(item))
                               
@@ -151,10 +248,23 @@ renderRow(item){
                           }
                           }
                       />
-                      
+            </ScrollView>
+           
+              <TouchableOpacity onPress={this.openCarrinho} style={styles.fab}>
+                <ImageBackground style={{height: 50, width:50,justifyContent:'center',alignItems:'center'}}
+                  source={require('../../assets/images/sacola.png')}
+                >
+                  <View style={styles.badge}>
+                    <Text style={styles.fabIcon}>{this.state.countItensCarrinho}</Text>
+                  </View>
+                </ImageBackground>           
+             
+                
+              </TouchableOpacity>
+           
           </SafeAreaView>
               
-                   
+      
             
                       
               
@@ -165,11 +275,41 @@ renderRow(item){
     
   
 }
+
 const styles = StyleSheet.create({
-  
+  row: {
+    marginTop:5,
+    flex: 1, 
+    flexDirection: 'row',
+  },
+  list:{
+    height:'100%',
+    
+  },
+  ButtonWrap: {
+    alignItems:'center',
+    width:'50%'
+  },
+  buttonCat:{
+    width:'80%',
+    margin:5,
+    backgroundColor:'#f33'
+},
+...Platform.select({
+     
+  android: {
+    box:{
+      alignItems: "center",
+      backgroundColor: "#fff",
+      flexGrow: 0.5,
+      margin: 10,
+      padding: 2,
+      flexBasis:1,
    
-   
-  box:{
+  },
+  },
+  ios:{
+    box:{
       alignItems: "center",
       backgroundColor: "#fff",
       flexGrow: 0.5,
@@ -177,11 +317,14 @@ const styles = StyleSheet.create({
       padding: 2,
       flexBasis:0
   },
+  }
+}),
+  
   card:{
       justifyContent: 'center',
       alignItems: 'center',
       flex: 3,
-     borderRadius:8
+     
   },
   cardImage:{
       height: 100,
@@ -189,8 +332,9 @@ const styles = StyleSheet.create({
       borderRadius: 5,
       padding:5, 
       flex: 1,   
-      
+      resizeMode: 'contain'
   },
+  
   postTitle:{
       fontWeight: 'bold',
       fontSize:17,
@@ -204,33 +348,38 @@ const styles = StyleSheet.create({
   button:{
       flex: 1,
   },
-  
-});
-HomeScreen.navigationOptions = {
-  //header: null,
-  title: 'Produtos',
-  ...Platform.select({
-     
-    android: {
-      headerTintColor: '#fff',
-  
-  headerStyle: {
-    backgroundColor: '#F05641',
-    //#F15641
-    //#E64A19
-   
-  },
+  fab: { 
+    position: 'absolute', 
+    width: 68, 
+    height: 68, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    right: 15, 
+    bottom: 20,
+    borderWidth:1,
+    borderColor:'#ccc', 
+    backgroundColor: '#F05641', //'#147EFBee', 
+    borderRadius: 48, 
+    elevation: 8 
+  }, 
+ 
+    fabIcon: { 
+      padding:2,
+      marginLeft:4,
+      marginRight:4,
+      fontWeight: '800',
+      color:"#f43",
+      justifyContent:'center',
+      alignItems:'center',
+      fontSize: 20
     },
-  }),
-
-  headerRight: (
-    <Button
-    onPress={() => firebase.auth().signOut()}
-    title="Sair"
-    color="#E64A19"
-  />
-       
-      ),
-};
+    badge:{
+      //backgroundColor:'#r23',
+      
+      marginTop:13,
+      justifyContent: "center",
+      alignContent: 'center'
+    }
+});
 
 

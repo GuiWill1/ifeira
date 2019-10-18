@@ -5,12 +5,13 @@ import { createStackNavigator, createBottomTabNavigator } from 'react-navigation
 import TabBarIcon from '../../components/TabBarIcon';
 import HomeAdmScreen from '../../screens/Admin/HomeAdm';
 import Produtos from '../../screens/Admin/Produtos';
-
+import Pedido from '../../screens/Admin/Pedido'
 
 
 const HomeAdmStack = createStackNavigator(
   {
     HomeAdm: HomeAdmScreen,
+    Pedido: Pedido
   },
 
 );

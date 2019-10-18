@@ -4,13 +4,14 @@ import { createStackNavigator, createBottomTabNavigator } from 'react-navigation
 
 import TabBarIcon from '../components/TabBarIcon';
 import HomeScreen from '../screens/User/HomeScreen';
-import LinksScreen from '../screens/User/LinksScreen';
-import SettingsScreen from '../screens/User/SettingsScreen';
+import PedidosScreen from '../screens/User/PedidosScreen';
+import MeusDadosScreen from '../screens/User/MeusDados';
 import ProdutoScreen from '../screens/User/ProdutosCategoria';
 import CategoriaScreen from '../screens/User/Categoria';
-import CategoriaNavigator from './CategoriaNavigator';
-import Feed from '../screens/User/Feed';
-import FeedList from '../screens/User/FeedList';
+import AdicionarScreen from '../screens/User/AdicionarProduto';
+import CarrinhoScreen from '../screens/User/Carrinho';
+import CadastrarEndereco from '../screens/User/CadastrarEndereco'
+import Cadastro from "../screens/Login/Cadastro";
 
 const config = Platform.select({
 
@@ -19,18 +20,23 @@ const config = Platform.select({
 
 const HomeStack = createStackNavigator(
   {
-    Home:HomeScreen,
-    
- 
-    
+    Home: HomeScreen,
+    Adicionar:AdicionarScreen,
+    Categoria:CategoriaScreen,
+    Produto:ProdutoScreen,
+    Carrinho:CarrinhoScreen,
+    CadastrarEndereco: CadastrarEndereco
   },
   config
 );
 
 HomeStack.navigationOptions = {
   tabBarLabel: 'Inicio',
- 
-      
+  header:null,
+  headerMode:'none',
+  mode:'modal',
+  
+  
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
       focused={focused}
@@ -45,43 +51,45 @@ HomeStack.navigationOptions = {
 
 HomeStack.path = '';
 
-const LinksStack = createStackNavigator(
+const PedidosStack = createStackNavigator(
   {
-    Links: LinksScreen,
+    Pedidos: PedidosScreen,
   },
   config
 );
 
-LinksStack.navigationOptions = {
+PedidosStack.navigationOptions = {
   tabBarLabel: 'Meus pedidos',
   tabBarIcon: ({ focused }) => (
     <TabBarIcon focused={focused} name={Platform.OS === 'ios' ? 'ios-list' : 'md-list'} />
   ),
 };
 
-LinksStack.path = '';
+PedidosStack.path = '';
 
-const SettingsStack = createStackNavigator(
+const MeusDadosStack = createStackNavigator(
   {
-    Settings: SettingsScreen,
+    MeusDados: MeusDadosScreen,
+    CadastrarEndereco: CadastrarEndereco,
+    Cadastro:Cadastro,
   },
   config
 );
 
-SettingsStack.navigationOptions = {
+MeusDadosStack.navigationOptions = {
   tabBarLabel: 'Meus dados',
+  
   tabBarIcon: ({ focused }) => (
     <TabBarIcon focused={focused} name={Platform.OS === 'ios' ? 'ios-person' : 'md-person'} />
   ),
 };
 
-SettingsStack.path = '';
+MeusDadosStack.path = '';
 
-const CategoriaStack = createStackNavigator(
+/*const CategoriaStack = createStackNavigator(
   {
     Categoria: CategoriaScreen,
-    Categoria: CategoriaScreen,
-    Produto:ProdutoScreen,
+    
   },
   config
 );
@@ -93,13 +101,13 @@ CategoriaStack.navigationOptions = {
   ),
 };
 
-CategoriaStack.path = '';
+CategoriaStack.path = '';*/
 
 const tabNavigator = createBottomTabNavigator({
   HomeStack,
-  CategoriaStack,
-  LinksStack,
-  SettingsStack,
+  PedidosStack,
+  MeusDadosStack,
+  
 });
 
 tabNavigator.path = '';

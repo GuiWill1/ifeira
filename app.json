@@ -1,6 +1,5 @@
 {
   "expo": {
-   
     "name": "iFeira",
     "slug": "iFeira",
     "privacy": "public",
@@ -17,7 +16,6 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -26,6 +24,7 @@
     ],
     "ios": {
       "supportsTablet": true
-    }
+    },
+    "description": ""
   }
 }

@@ -2,7 +2,6 @@ import React, {Component} from 'react';
 import { Container, Body, Content, Button, Text ,Form,Input,Item,Label} from 'native-base';
 import Colors from '../../constants/Colors';
 import {TextInputMask} from 'react-native-masked-text'
-import DatePicker from 'react-native-datepicker';
 import {Card} from 'react-native-elements';
 import {
   SafeAreaView,
@@ -14,9 +13,10 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator
   
 } from 'react-native';
-
+//const {navigation} = this.props;
 
 import firebase from 'firebase';
 import '@firebase/firestore';
@@ -30,18 +30,50 @@ class Cadastro extends Component{
      
       
         
-        this.state = ({
-            nome:'',
-            sobrenome:'',
-            telefone1: '',
-            telefone2: '',
-            date:'01/01/2000',
-            email:'',
-            senha:''
+        this.state = {
+            nome:"",
+            sobrenome:"",
+            telefone1: "",
+            telefone2: "",
+            senha:"",
 
-        })
+            isEditing:false,
+
+        }
       }
-      cadastrar = (nome,sobrenome,telefone1,telefone2,date,email,senha) => {
+      componentDidMount(){
+        this.getDados()
+      }
+getDados(){
+ 
+  const { navigation } = this.props;
+  var nome = navigation.getParam('nome')
+  var sobrenome = navigation.getParam('sobrenome') 
+  var telefone1 = navigation.getParam('telefone1') 
+  var telefone2 = navigation.getParam('telefone2') 
+  console.log(nome,sobrenome,telefone1,telefone2)
+
+  if(nome){
+    this.setState({
+      isEditing:true,
+      nome: this.state.nome = nome,
+      sobrenome: this.state.sobrenome = sobrenome,
+      telefone1: this.state.telefone1 = telefone1,
+      telefone2: this.state.telefone2 = telefone2,
+
+      loading:false
+    })
+  }else{
+    
+  }
+ 
+
+
+}
+cadastrar = (nome,sobrenome,telefone1,telefone2,email,senha) => {
+  var user = firebase.auth().currentUser
+  const {navigation} = this.props;
+
         const unmasked1 = this.phoneField1.getRawValue()
         const unmasked2 = this.phoneField2.getRawValue()
         if(nome === ""){
@@ -50,52 +82,83 @@ class Cadastro extends Component{
           Alert.alert("Oops!","O campo Sobrenome não pode estar vazio")
         }else if(unmasked1 ===""){
           Alert.alert("Oops!", "Você deve cadastrar pelo menos um telefone!\n- De preferência o WhatsApp!")
-        }else if (unmasked2 === ""){
-          unmasked2 = "N"
         }else{
-          firebase.auth().createUserWithEmailAndPassword(email,senha)
-        .then(cred => {
-        
-   
-            db.collection("Cliente").doc(cred.user.uid).set({
+        if(this.state.isEditing){
+          var tel2 = ""
+            if(unmasked2 === ""){
+              tel2 = "N"
+            }else{
+              tel2 = unmasked2
+            }
+          db.collection("Cliente").doc(user.uid).update({
             nome: nome,
             sobrenome: sobrenome,
-            email: email,
             telefone1: unmasked1,
-            telefone2: unmasked2,
-            dataNascimento: date,
+            telefone2: tel2,
 
             })
             .then(function() {
               alert("Cadastro efetuado com sucesso!")
+              navigation.goBack()
             })
             .catch(function(error) {
               cred.user.delete()
               Alert.alert("Oops","ocorreu um erro ao salvar, cadastre-se novamente"+ error);
             });
-   
-          
-        })
-        .catch(function (error){
-          var errorCode = error.code;
-                var errorMessage = error.message;
+        }else{
+          firebase.auth().createUserWithEmailAndPassword(email,senha)
+          .then(cred => {
+            this.setState({loading:this.state.loading = true})
+            var tel2 = ""
+            if(unmasked2 === ""){
+              tel2 = "N"
+            }else{
+              tel2 = unmasked2
+            }
+            
+              db.collection("Cliente").doc(cred.user.uid).set({
+              nome: nome,
+              sobrenome: sobrenome,
+              email: email,
+              telefone1: unmasked1,
+              telefone2: tel2,
+  
+              })
+              .then(function() {
+                alert("Cadastro efetuado com sucesso!")
+              })
+              .catch(function(error) {
+                cred.user.delete()
+                Alert.alert("Oops","ocorreu um erro ao salvar, cadastre-se novamente"+ error);
                 
-                switch(errorCode){
-                    
-                    case 'auth/invalid-email':
-                        Alert.alert("Oops","Email inválido");
-                        break
-                    case 'auth/email-already-in-use':
-                        Alert.alert("Oops","Esse e-mail já esta em uso em outra conta");
-                        break
-                    case 'auth/weak-password':
-                        Alert.alert("Oops","A senha precisa ter no mínimo 6 dígitos ");
-                        break 
-                             
-                }
-              
-            })
+              });
+     
+            
+          })
+          .catch(function (error){
+            var errorCode = error.code;
+                  var errorMessage = error.message;
+                  console.log(errorCode,errorMessage)
+                  switch(errorCode){
+                      
+                      case 'auth/invalid-email':
+                          Alert.alert("Oops","Email inválido");
+                        
+                          break
+                      case 'auth/email-already-in-use':
+                          Alert.alert("Oops","Esse e-mail já esta em uso em outra conta");
+                          break
+                      case 'auth/weak-password':
+                          Alert.alert("Oops","A senha precisa ter no mínimo 6 dígitos ");
+                          break 
+                      default:
+                        Alert.alert("Oops","Occorreu um erro")   
+                  }
+                
+              })
+          }
         }
+        
    
             
       }
@@ -115,11 +178,11 @@ class Cadastro extends Component{
                 <Card>
                 <Text>Nome</Text>
                 <Item regular style={styles.input} >
-                    <Input onChangeText={(nome) => this.setState({nome})} placeholderTextColor="#CCCC"  placeholder="Digite seu nome aqui" keyboardType='ascii-capable'/>
+                    <Input value={this.state.nome} onChangeText={(nome) => this.setState({nome})} placeholderTextColor="#CCCC"  placeholder="Digite seu nome aqui" keyboardType='ascii-capable'/>
                 </Item>
                 <Text>Sobrenome</Text>
                 <Item regular style={styles.input}>
-                    <Input onChangeText={(sobrenome) => this.setState({sobrenome})} placeholderTextColor="#CCCC" placeholder="Digite seu sobrenome aqui" keyboardType="ascii-capable"/>
+                    <Input value={this.state.sobrenome} onChangeText={(sobrenome) => this.setState({sobrenome})} placeholderTextColor="#CCCC" placeholder="Digite seu sobrenome aqui" keyboardType="ascii-capable"/>
                 </Item>
                 <View style={styles.row}>
         <View style={styles.inputWrap}>
@@ -146,7 +209,7 @@ class Cadastro extends Component{
         </View>
 
         <View style={styles.inputWrap}>
-        <Text>Telefone</Text>
+        <Text>Telefone(Opcional)</Text>
                             <View style={styles.tel}>
                             <TextInputMask placeholder="Digite seu telefone"
                                 type={'cel-phone'}
@@ -167,70 +230,54 @@ class Cadastro extends Component{
         </View>
       </View>
                     
-                            
-                            <Text>Data de nascimento</Text>
-                            <DatePicker
-        style={{width: 160}}
-        date={this.state.date}
-        mode="date"
-        androidMode ="spinner"
-        placeholder="Selecione a data"
-        format="DD/MM/YYYY"
-        minDate="01-01-1935"
-        maxDate="01-01-2007"
-        confirmBtnText="Confirmar"
-        cancelBtnText="Cancelar"
-       
-        customStyles={{
-            dateIcon: {
-            width:0,
-            height:0,
-          },
-          dateInput: {
-            marginLeft: 10,
-            marginTop:10,
-            borderRadius:6,
-          
-            borderColor:"#BBB"
-          }
-          // ... You can check the source to find the other keys.
-        }}
-        onDateChange={(date) => {this.setState({date: date})}}
-      />
+ 
+                           
                 </Card>
                    
              
          
-         
-          <Text style={styles.sectionTitle}>Dados de acesso</Text>
-                <Card >
-                <Text>E-mail</Text>
-                <Item regular style={styles.input}>
-                    <Input onChangeText={(email) => this.setState({email})} placeholderTextColor="#CCCC"  placeholder="Digite seu email aqui"  keyboardType="email-address" autoCapitalize="none"/>
-                </Item>
-                                <Text>Senha</Text>
-                                <Item regular style={styles.input}>
-                                
-                                    <Input onChangeText={(senha) => this.setState({senha})} placeholderTextColor="#CCCC"  placeholder="Digite sua senha aqui"  secureTextEntry />
-                                </Item>
-             
- 
-                </Card>
-                           
-                                 
-              
+                {!this.state.isEditing &&
+                  <Text style={styles.sectionTitle}>Dados de acesso</Text>
+                }
+                {!this.state.isEditing &&
+                    <Card >
+                    <Text>E-mail</Text>
+                    <Item regular style={styles.input}>
+                        <Input onChangeText={(email) => this.setState({email})} placeholderTextColor="#CCCC"  placeholder="Digite seu email aqui"  keyboardType="email-address" autoCapitalize="none"/>
+                    </Item>
+                                    <Text>Senha</Text>
+                                    <Item regular style={styles.input}>
+                                    
+                                        <Input onChangeText={(senha) => this.setState({senha})} placeholderTextColor="#CCCC"  placeholder="Digite sua senha aqui"  secureTextEntry />
+                                    </Item>
+                
+    
+                    </Card>
+                }
+                  
+                {
+          this.state.loading &&
+
+          <ActivityIndicator
+            size="large"
+            color="#3498db"
+            
+          />
+
+        }
                 <Button backgroundColor="#F15641" full style={styles.button} 
                 onPress={()=> this.cadastrar(
                     this.state.nome,
                     this.state.sobrenome,
                     this.state.telefone1,
                     this.state.telefone2,
-                    this.state.date,
+                  
                     this.state.email,
                     this.state.senha)
                     }>
                     <Text>Cadastrar</Text>
                 </Button>
+                
         </Content>
              
               
@@ -300,7 +347,7 @@ export default Cadastro;
     },
     tel:{
         borderWidth:1,
-        width:140,
+        width:'90%',
         height:35,
         borderRadius:5,
         justifyContent: 'center',
@@ -310,11 +357,12 @@ export default Cadastro;
     },
     row: {
         flex: 1,
-        flexDirection: "row"
+        flexDirection: "row",
+       
       },
       inputWrap: {
         flex: 1,
-        
+     
         marginBottom: 10
       },
    

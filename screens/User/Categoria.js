@@ -14,7 +14,7 @@ import {
   
 import Firebase from '../../constants/Config';
 import '@firebase/firestore';
-import { TouchableHighlight, FlatList } from 'react-native-gesture-handler';
+import { TouchableOpacity, FlatList } from 'react-native-gesture-handler';
 
 
 
@@ -23,43 +23,48 @@ const db = Firebase.firestore()
 const products = [];
 
 
-export default class FeedList extends Component {
+
+export default class Categoria extends Component {
+    
     constructor(props){
         super(props);
-       
+     
         this.state = {
-          
+            navigation: this.props.navigation,
             data:[]
         }
         this.renderRow = this.renderRow.bind(this);
         this.pressRow = this.pressRow.bind(this);
-    }
-    componentDidMount(){
-        var text = ""
         
-        this.getItens();
+        this.getItens()
+       
+        
     }
     componentWillMount(){
+     products.length = 0
+        
         
     }
-    checkUserLoggedStatus = () =>{
-
-    };
-
+    goToProdutos = (item)=>{
+        //alert(item.nome)
+        
+        return(this.state.navigation.navigate('Produto',{item:item}));
+        
+    }
+    
     getItens(){
-        db.collection("Produtos").where("visivel","==",true).onSnapshot(snapshot =>{
+        db.collection("Categorias").orderBy("nome").onSnapshot(snapshot =>{
             let changes = snapshot.docChanges();
-            
             changes.forEach(change =>{
                 if(change.type == 'added'){
-                    const { categoria,imagem, nome,unidadeMedida, preco, uidFornecedor } = change.doc.data();
-                    const uid =  change.doc.id;
-                    products.push({ uid, categoria,imagem, nome, preco,unidadeMedida, uidFornecedor });
+                    const { imagem, nome} = change.doc.data();
+                    const id =  change.doc.id;
+                    products.push({ id, imagem, nome});
                 }else if(change.type == 'modified'){
                    
-                   const { categoria,imagem, nome,unidadeMedida, preco, uidFornecedor } = change.doc.data();
-                    const uid =  change.doc.id;
-                    products.push({ uid, categoria,imagem, nome, preco,unidadeMedida, uidFornecedor });
+                   const { imagem, nome} = change.doc.data();
+                    const id =  change.doc.id;
+                    products.push({ id, categoria,imagem, nome});
                 }
             });
             this.setState({
@@ -82,13 +87,9 @@ export default class FeedList extends Component {
         let lastRowElements = data.length - rows * columns; // [B]
         while (lastRowElements !== columns) { // [C]
           data.push({ // [D]
-            uid: `empty-${lastRowElements}`,
+            id: `empty-${lastRowElements}`,
             nome: `empty-${lastRowElements}`,
             categoria: `empty-${lastRowElements}`,
-            imagem: `empty-${lastRowElements}`,
-            preco: `empty-${lastRowElements}`,
-            unidadeMedida: `empty-${lastRowElements}`,
-            uidFornecedor: `empty-${lastRowElements}`,
             empty: true
           });
           lastRowElements += 1; // [E]
@@ -97,43 +98,33 @@ export default class FeedList extends Component {
       }
     renderRow(item){
         return(
-            <View style={styles.box}>
-                
+            
+            
+                <View style={styles.box} >
+                <TouchableOpacity onPress={() => this.goToProdutos(item) }>
                 <Card style={styles.card}>
-                        <CardItem header bordered>
+                
+                <CardItem header bordered> 
                             <Image style={styles.cardImage}
                             source={{ uri: item.imagem}}
                             />
                         </CardItem>
-                        <CardItem >
-                            <CardItem cardBody>
-                            <Body>
-                            <Text style={styles.postTitle}>
+                    <CardItem cardBody> 
+                    <Text style={styles.postTitle}>
                             {item.nome}
                              
                                 </Text>
-                                
-                                <Text>
-                                {item.unidadeMedida}
-                                </Text>
-                                <Text style={styles.postPrice}>
-                                R$ {item.preco},00
-                                </Text>
-                            </Body>
-                                
-                            </CardItem>
-                        </CardItem>
-                        <CardItem footer>
-                                <Button iconLeft onPress={()=>{
-                this.pressRow(item);
-            }} >
-                                    <Icon name='add' />
-                                    <Text style={{fontWeight:'bold'}}>Adicionar</Text>
-                                </Button>
-                        </CardItem>
+                    </CardItem>
+               
+                        
+                          
+                     
                     </Card>    
-   
-      </View>
+                    </TouchableOpacity>
+                </View>
+           
+                
+            
         );
     }
   render() {
@@ -141,15 +132,18 @@ export default class FeedList extends Component {
     return (
         <SafeAreaView>
                <FlatList 
-                        style={styles.list}
+                        contentContainerStyle={styles.list}
                         data={this.createRows(this.state.data,columns)}
-                        keyExtractor={item => item.uid}
+                        keyExtractor={item => item.id}
                         numColumns={columns}
+                        onPress={()=> alert(item.nome)}
                         renderItem={({item}) => {
                             if(item.empty){
                                 return <View style={{backgroundColor:"transparent"}}/>
                             }
+
                             return (this.renderRow(item))
+                            
                             
                                 
                         
@@ -169,44 +163,71 @@ export default class FeedList extends Component {
   }
   
 }
+
 const styles = StyleSheet.create({
-  
-   
-   
+    list:{
+        alignContent:'center',
+        alignItems:'center',
+    },
+    touchable:{
+        flex:1,
+        
+       
+    },
     box:{
-        alignItems: "center",
+        
+        alignContent:'center',
+        alignItems:'center',
+       
         backgroundColor: "#fff",
-        flexGrow: 0.5,
-        margin: 2,
-        padding: 2,
-        flexBasis:0
+        flexGrow:0,
+        margin:2,
+     
+        height:160
+    
     },
     card:{
         justifyContent: 'center',
         alignItems: 'center',
-        flex: 3,
-       borderRadius:8
+        flex: 1,
+       borderRadius:8,
+       height:160,
+       width:160,
+     
     },
     cardImage:{
-        height: 100,
-        width: null,
+        height: 50,
+        width: 50,
         borderRadius: 5,
         padding:5, 
-        flex: 1,   
+      
         
     },
     postTitle:{
         fontWeight: 'bold',
         fontSize:17,
+        padding:5
+        
     },
-    postPrice:{
-        fontWeight: 'bold',
-        fontSize:20,
-        paddingTop:5,
-        color: "#383"
-    },
-    button:{
-        flex: 1,
-    },
+   
     
   });
+  Categoria.navigationOptions = {
+    //header: null,
+    title: 'Categorias',
+    headerBackTitle: 'Voltar',
+    ...Platform.select({
+       
+      android: {
+        headerTintColor: '#fff',
+    
+    headerStyle: {
+      backgroundColor: '#F05641',
+      //#F15641
+      //#E64A19
+      
+    },
+      },
+    }),
+  
+  };

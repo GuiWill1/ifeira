@@ -1,5 +1,5 @@
 import React,{Component}from 'react';
-import { Container, Header, Content, Card, CardItem, Text, Body, Button,Tabs,Tab} from 'native-base';
+import { Container, Header, Content, Card, CardItem, Text, Body, Button} from 'native-base';
 import {
   SafeAreaView,
   StyleSheet,
@@ -10,8 +10,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  Linking,
-
+  Linking
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import firebase from 'firebase';
@@ -22,15 +21,14 @@ import { TouchableHighlight, FlatList } from 'react-native-gesture-handler';
 
   
 const db = firebase.firestore() 
-const pedidos = [];
-const pedidosAprovados = [];
+const products = [];
 
 
 
-export default class HomeAdm extends Component {
+export default class PedidosScreen extends Component {
   static navigationOptions = {
     
-    headerTitle: 'Pedidos',
+    headerTitle: 'Meus Pedidos',
    
     mode:'modal',
     ...Platform.select({
@@ -50,12 +48,10 @@ export default class HomeAdm extends Component {
 
   constructor(props){ 
     super(props) 
-    this.getItensNovos()
-    this.getItensAprovados()
+    this.getItens();
+    
     this.state = {
-      pedidos:[],
-      pedidosAprovados: [],
-
+      data:[],
       count:0,
       total:0.0,
       noItem:false,
@@ -75,81 +71,18 @@ export default class HomeAdm extends Component {
   }
   
 componentWillMount(){
-    pedidos.length = 0
-    pedidosAprovados.length = 0
+    products.length = 0
+   
 }
 componentDidMount(){
  
   
   
 }
-getItensAprovados(){
-  var user = firebase.auth().currentUser 
-       
-  db.collection("Pedidos").where("finalizado",'==',false).orderBy("dataHora",'desc').onSnapshot(snapshot =>{
-      let changes = snapshot.docChanges();
-      
-        changes.forEach(change =>{
-          if(change.type == 'added'){
-            console.log("ninjaadicionou pedido")
-              const { dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco} = change.doc.data();
-              const idVenda =  change.doc.id;
-              if(status['status'] === "APROVADO"){
-                pedidosAprovados.push({idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco});
-              }
-              
-            
-            
-          }else if(change.type == 'modified'){
-       
-            const { dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco} = change.doc.data();
-            const idVenda =  change.doc.id;
-            
-            //pedidos.push({idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal});
-            for (let i in pedidosAprovados) {
-              if(pedidosAprovados[i].idVenda === change.doc.id){
-                if(status["status"] === "APROVADO" || status["status"] === "CANCELADO"){
-                  pedidosAprovados[i] = {idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco}
-                  //pedidosAprovados.splice(i,1)
-                }
-                
-                console.log("MOdificou")
-                console.log("IDPROD:",pedidosAprovados[i].idVenda + "\n IDDOC:",change.doc.id)
-             }
-            }
-          }else if(change.type == 'removed'){
-            console.log("removeu",change.doc.id)
-            for (let i in pedidosAprovados){
-              if(pedidosAprovados[i].idVenda === change.doc.id){
-                pedidosAprovados.splice(i,1)
-              }
-            }
-          }
-      });
-       
-       if(pedidosAprovados.length==0){
-        this.setState({noItem:true})
-       }else{
-         this.setState({noItem:false})
-       }
-       console.log("ARRAYPROD:",pedidosAprovados.length)
-       
-      this.setState({
-       
-          pedidosAprovados: this.state.pedidosAprovados = pedidosAprovados,
-          refresh:true
-      })
-      
-      console.log("STATEPROD:",this.state.pedidosAprovados.length)
-
-      
-      
-  })
-}
-getItensNovos(){
+getItens(){
     var user = firebase.auth().currentUser 
        
-  db.collection("Pedidos").where("finalizado",'==',false).orderBy("dataHora",'desc').onSnapshot(snapshot =>{
+  db.collection("Pedidos").where("idCliente","==",user.uid).where("finalizado",'==',false).orderBy("dataHora",'desc').onSnapshot(snapshot =>{
       let changes = snapshot.docChanges();
       
         changes.forEach(change =>{
@@ -157,53 +90,46 @@ getItensNovos(){
             console.log("ninjaadicionou pedido")
               const { dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco} = change.doc.data();
               const idVenda =  change.doc.id;
-              if(status['status'] === "EM_ESPERA"){
-                pedidos.push({idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco});
-              }
               
+              products.push({idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco});
             
             
           }else if(change.type == 'modified'){
        
             const { dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco} = change.doc.data();
             const idVenda =  change.doc.id;
-            
-            //pedidos.push({idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal});
-            for (let i in pedidos) {
-              if(pedidos[i].idVenda === change.doc.id){
-                if(status["status"] === "APROVADO" || status["status"] === "CANCELADO"){
-                  //pedidos[i] = {idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco}
-                  pedidos.splice(i,1)
-                }
-                
+            //products.push({idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal});
+            for (let i in products) {
+              if(products[i].idVenda === change.doc.id){
                 console.log("MOdificou")
-                console.log("IDPROD:",pedidos[i].idVenda + "\n IDDOC:",change.doc.id)
+                console.log("IDPROD:",products[i].idVenda + "\n IDDOC:",change.doc.id)
+                products[i] = {idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco}
              }
             }
           }else if(change.type == 'removed'){
             console.log("removeu",change.doc.id)
-            for (let i in pedidos){
-              if(pedidos[i].idVenda === change.doc.id){
-                pedidos.splice(i,1)
+            for (let i in products){
+              if(products[i].idVenda === change.doc.id){
+                products.splice(i,1)
               }
             }
           }
       });
        
-       if(pedidos.length==0){
+       if(products.length==0){
         this.setState({noItem:true})
        }else{
          this.setState({noItem:false})
        }
-       console.log("ARRAYPROD:",pedidos.length)
+       console.log("ARRAYPROD:",products.length)
        
       this.setState({
        
-          pedidosAprovados: this.state.pedidos = pedidos,
+          data: this.state.data = products,
           refresh:true
       })
       
-      console.log("STATEPROD:",this.state.pedidos.length)
+      console.log("STATEPROD:",this.state.data.length)
 
       
       
@@ -236,7 +162,7 @@ NoItems(){
 }
 formatedDate(item){
   //var Fulldata = item.dataHora.toDate().toLocaleString()
-  var data = item.dataHora.toDate().toLocaleString("pt-BR") 
+  var data = item.dataHora.toDate().toLocaleString("en-GB") 
   //var hora = item.dataHora.toDate().toLocaleTimeString()
   //console.log(Fulldata)
   
@@ -376,8 +302,16 @@ sendOnWhatsApp=(item) => {
  
 }
 visualizar(item){
-  
-  this.props.navigation.navigate('Pedido',{item:item})
+  msg = ""
+  itens = item.itens
+  console.log(item.itens)
+  for(let i in itens){
+    console.log(itens[i].nomeProduto)
+    msg += itens[i].quantidade+" X "+itens[i].nomeProduto+"\n"
+
+    //idProduto,nomeProduto,unidadeMedida, precoUnitario,quantidade,imagem
+  }
+  Alert.alert("Itens do pedido",msg)
 }
 renderRow(item){
   return(
@@ -441,12 +375,24 @@ renderRow(item){
           
          
             <Container style={{marginLeft:8,marginRight:8}}>
-            <Tabs>
-                <Tab heading="Novos Pedidos">
-                {this.state.noItem && this.NoItems()}
+            <View style={styles.row}>
+                <View style={styles.ButtonWrap}>
+                <Text style={{color:'#fff',marginRight:3,fontWeight:'bold'}}>Pedidos até 16/10</Text> 
+                    
+                </View>
+                <View style={styles.ButtonWrap2}>
+                {/* <View style={{backgroundColor:'#3b5',borderRadius:8,padding:3,marginLeft:3}}><Text style={{color:'#fff',fontWeight:'bold'}}>GRÁTIS</Text></View> */} 
+                <Text style={{color:'#fff',marginRight:3,fontWeight:'bold'}}>Entregues em 20/10</Text> 
+                </View>
+                
+            </View>
+         
+            
+           
+            {this.state.noItem && this.NoItems()}
               {!this.state.noItem &&  <FlatList 
                           style={styles.list}
-                          data={this.state.pedidos}
+                          data={this.state.data}
                           keyExtractor={item => item.idProduto}
                           numColumns={1}
                           renderItem={({item}) => {
@@ -459,34 +405,6 @@ renderRow(item){
                           }
                       />
               }
-                </Tab>
-                <Tab heading="Pedidos Aprovados">
-                {this.state.noItem && this.NoItems()}
-              {!this.state.noItem &&  <FlatList 
-                          style={styles.list}
-                          data={this.state.pedidosAprovados}
-                          keyExtractor={item => item.idProduto}
-                          numColumns={1}
-                          renderItem={({item}) => {
-                            
-                              return (this.renderRow(item))
-                              
-                                  
-                          
-                          }
-                          }
-                      />
-              }    
-                </Tab>
-            
-              </Tabs>
-           
-           
-            
-   
-            
-           
-           
 
            
          </Container>
@@ -650,8 +568,6 @@ StatusWrap: {
       alignContent: 'center'
     }
 });
-
-
 
 
 

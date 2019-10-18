@@ -10,8 +10,8 @@ import {
 } from 'native-base';
 import firebase from 'firebase';
 
-import FeedList from "../User/FeedList";
-import Setting from "../User/SettingsScreen";
+
+
 
 
 export default class Produtos extends Component {
@@ -24,7 +24,7 @@ export default class Produtos extends Component {
     color="#3333ff"
   />
      
-           <FeedList/>
+   
      
           
     </Container>

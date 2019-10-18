@@ -24,28 +24,34 @@ class Login extends Component{
         this.state = ({
             email: '',
             senha: '',
-            loading:false
+            isLoading:false
         })
     }
   
     
     loginUser = (email,senha) => {
+       
+        
         firebase.auth().onAuthStateChanged(function(user){
             //alert("login:"+user.email)
         })
         try{
-        
+            
             firebase.auth().signInWithEmailAndPassword(email,senha)
             .then(function(user){
                 //alert(user.user.uid)
+                
             })
+           
             .catch(function(error){
+             
                 var errorCode = error.code;
                 var errorMessage = error.message;
                 
                 switch(errorCode){
                     
                     case 'auth/invalid-email':
+                        
                         Alert.alert("Oops","Email inválido");
                         
                         break
@@ -94,7 +100,23 @@ class Login extends Component{
             alert('Erro'+error.toString())
         }
     }
+    dismsissLoading = () =>{
+        this.setState({ isLoading: false })
+    }
+    showLoading(){
+        this.setState({ isLoading: true})
+    }
+    renderActivityIndicador(){
+        return(
+            <ActivityIndicator
+            style={{ height: 80 }}
+            color="#222"
+            size="large"
+          />
+        )
+    }
     render(){
+        const {isLoading} = this.state;
     return (
     
         <Container>
@@ -137,13 +159,15 @@ class Login extends Component{
            <Button backgroundColor="#F15641" full style={styles.button} onPress={()=> this.loginUser(this.state.email,this.state.senha)}>
                     <Text>Entrar</Text>
             </Button>
-            
+        
             <Button  transparent  full onPress={() => Alert.prompt('Digite seu e-mail', null, (text) =>
                     this.recuperarConta(text),
                 )}>
                     <Text>Esqueci minha senha</Text>
                 </Button>
-            
+                {isLoading && (
+                    this.renderActivityIndicador()
+                )}
         </Content>
     </Container>
       
