@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Linking
  
 } from 'react-native';
 
@@ -24,14 +25,14 @@ import { TouchableHighlight, FlatList, TextInput } from 'react-native-gesture-ha
 
   
 const db = firebase.firestore() 
+var idVenda = ""
 
-const products = [];
-
+var dadosPessoais;
 
 export default class Pedido extends Component {
   static navigationOptions = {
     
-    headerTitle: 'Pedido',
+    headerTitle: 'Dados do Pedido',
     mode:'modal',
     ...Platform.select({
      
@@ -63,7 +64,7 @@ export default class Pedido extends Component {
       qtdTotal:0,
       status:"",
       valorTotal:0.0,
-
+      idVenda: "",
     
       dados:[],
 
@@ -73,11 +74,16 @@ export default class Pedido extends Component {
       numero:"",
       setor:"",
 
+      nome:"",
+      sobrenome:"",
+      email:"",
+      telefone1:"",
+      telefone2:""
 
       
   }
  
- 
+  this.aprovarPedido = this.aprovarPedido.bind(this)
 
   }
   
@@ -89,41 +95,77 @@ componentDidMount(){
  
   
 }
-getInfoUsuario(){
-
-}
+/*
+_getId() {
+    let id = false;
+    if(this.props.navigation.state.params) {
+      id = this.props.navigation.state.params.id;
+    }
+    return id;
+  }
+*/ 
+ getNavigationParams() {
+  
+   const item = this.props.navigation.getParam('item') || {}
+    return item
+  }
 getPedido(){
   
-  const { navigation } = this.props;
-  var item = navigation.getParam('item')
+  //const { navigation } = this.props;
+   //var item = navigation.getParam('item')
+ 
+
+ var item = this.getNavigationParams()
+  idVenda = item.idVenda
   var dataHora = item.dataHora
   var endereco = item.endereco
   var finalizado = item.finalizado
   var idCliente = item.idCliente
   var itens = item.itens
   var qtdTotal = item.qtdTotal
-  var status = item.state
+  var status = item.status
   var valorTotal = item.valorTotal
 
+  db.collection("Cliente").doc(idCliente).onSnapshot(snapshot =>{
+   
+    
+      
+      
+          const {email,nome,sobrenome,telefone1,telefone2}  = snapshot.data();
+          const uid =  snapshot.id
+          
+          dadosPessoais = {uid,email,nome,sobrenome,telefone1,telefone2};
+         
+          this.setState({
+            nome: this.state.nome = nome,
+            sobrenome: this.state.sobrenome = sobrenome,
+            email: this.state.email = email,
+            telefone1: this.state.telefone1 = telefone1,
+            telefone2: this.state.telefone2 = telefone2,
+            dadosPessoais:  this.state.dadosPessoais = dadosPessoais,
+            idVenda:this.state.idVenda = idVenda
+        })
+        console.log("Dados:",dadosPessoais)
+  })
   
 
 
-   /*msg = ""
-  itens = item.itens
-  console.log(item.itens)
+   var msg = ""
+  
+  
   for(let i in itens){
     console.log(itens[i].nomeProduto)
-    msg += itens[i].quantidade+" X "+itens[i].nomeProduto+"\n"
+    msg += "\n"+itens[i].quantidade+" X "+itens[i].nomeProduto
 
     //idProduto,nomeProduto,unidadeMedida, precoUnitario,quantidade,imagem
   }
-  Alert.alert("Itens do pedido",msg)*/
+  console.log("msg",msg)
       this.setState({
-        dataHora: dataHora,
+        dataHora: dataHora.toDate().toLocaleString("pt-BR") ,
         endereco:endereco,
         finalizado: finalizado,
         idCliente: this.state.idCliente = idCliente,
-        itens:itens,
+        itens:msg,
         qtdTotal:qtdTotal,
         status:status,
         valorTotal:valorTotal,
@@ -131,28 +173,70 @@ getPedido(){
       
     
 
-      
-      
   
 }
-
-setStatusPedido(){
-
-  const {navigation} = this.props;
-  const {params} = this.props.navigation.state;
-  const item = params ? params.item: null;
-  
-    db.collection("Pedido").doc(item.id).update({
-      
+cancelarPedido(){
+    db.collection("Pedidos").doc(this.state.idVenda).update({
       status:{
-          status:"",
-          mensagem:""
-        }
+        status: "CANCELADO",
+        mensagem: "Pedido reprovado pelo vendedor"
+      },
+       
 
       })
       .then(function() {
-        Alert.alert(":)","Desativado com sucesso!")
-        navigation.goBack()
+       
+        //navigation.goBack(null)
+        //navigation.popToTop()
+        //navigation.goBack()
+        Alert.alert(
+      ':)',
+      "Status atualizado com sucesso!",
+      [
+        
+        
+        {text: 'Ok', onPress: () =>  console.log("voltou") },
+      ],
+      {cancelable: false},
+    );
+     
+        
+      })
+      .catch(function(error) {
+       
+        Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
+      });
+  
+}
+aprovarPedido = ()=>{
+  const {navigation} = this.props
+  const item = navigation.getParam('item') || ''
+  
+    db.collection("Pedidos").doc(item.idVenda).update({
+      status:{
+        status: "APROVADO",
+        mensagem: "Pedido Aprovado"
+      },
+       
+
+      })
+      .then(function() {
+       
+        //
+        //navigation.popToTop()
+        //navigation.goBack()
+        Alert.alert(
+      ':)',
+      "Status atualizado com sucesso!",
+      [
+        
+        
+        {text: 'Ok', onPress: () =>  navigation.goBack() },
+      ],
+      {cancelable: false},
+    );
+     
+        
       })
       .catch(function(error) {
        
@@ -160,7 +244,29 @@ setStatusPedido(){
       });
 }
 
+  sendOnWhatsApp=(telefone1) => {
+  let msg = "Olá, :)"
+  let mobile = telefone1
+
+    if(mobile){
+      if(msg){
+        let url = 'whatsapp://send?text=' + msg + '&phone=55' + mobile;
+        Linking.openURL(url).then((data) => {
+          console.log('WhatsApp Opened');
+        }).catch(() => {
+          Alert.alert("Oops!",'Parece que você não tem whatsapp instalado no seu celular');
+        });
+      }else{
+        alert('Please insert message to send');
+      }
+    }else{
+      alert('Please insert mobile no');
+    }
   
+  
+  
+ 
+}
 
   
 renderRow(){
@@ -175,17 +281,36 @@ renderRow(){
                   <CardItem >
                  
                       <Body >
-                     
-                        <Text>Status:{this.state.status}</Text>
-                        <Text>Data:</Text>
-                        <Text>Nome:</Text>
-                        <Text>Telefone:</Text>
-                        <Text>Endereço:{this.state.endereco["nomeLocal"]}</Text>
-                        <Text>Itens do Pedido</Text>
-                        <Text>quantidade total: {this.state.qtdTotal}</Text>
-                        <Text>Valor Total: {this.state.valorTotal}</Text>
-                        <Text>Entrar em  contato:</Text>
+                        <Text style={styles.TextField}>Nome: {this.state.nome + " "+this.state.sobrenome}</Text>
+                        <Text style={styles.TextField}>Telefone 1: {this.state.telefone1}</Text>
+                        <Text style={styles.TextField}>Telefone 2: {this.state.telefone2}</Text>
 
+                        <CardItem >
+                        
+                        <Body >
+                          <Text style={{fontSize:20,fontWeight:'700'}}>Endereço</Text>
+                           <Text style={styles.TextField}>{
+                          this.state.endereco["nomeLocal"]+"\nLogradouro: "+this.state.endereco["logradouro"]+"\nSetor: "+this.state.endereco["setor"]+"\nNumero: "+this.state.endereco["numero"]+"\nComplemento: "+this.state.endereco["complemento"]}</Text>
+                          
+                          
+                          
+                        </Body>
+                      
+                      
+                       </CardItem>
+                       
+                        <Text style={{fontSize:20,fontWeight:'700'}}>Enviar mensagem no WhatsApp:</Text>
+                        <View style={{width:"100%",alignItems:'center',justifyContent:'center',marginTop:8}}>
+
+                        
+                          <TouchableOpacity style={{backgroundColor:'#3f3fff',padding:5,height:53,alignItems:'center',borderRadius:8}} onPress={() => this.sendOnWhatsApp(this.state.telefone1)}>
+                            <Image style={{width:25,height:25}}
+                              source={require('../../assets/images/whatsapp.png')}/>
+                               <Text style={{fontWeight:'bold',color:'#fff'}}>Contatar Cliente</Text>
+                          </TouchableOpacity>
+                        </View>
+                        
+                        
                       </Body>
                       
                       
@@ -210,24 +335,53 @@ renderRow(){
 
            <Card>
               <CardItem header style={{justifyContent:'space-between'}} >
-              <Image style={styles.cardImage}
-                              source={require('../../assets/images/endereco.png')}/>
-                <Text style={{fontSize:25,fontWeight:'800'}}>{this.state.title}</Text>
+              
+                <Text style={{fontSize:25,fontWeight:'800'}}>Dados do cliente</Text>
                
               </CardItem>
               {this.renderRow()}
     
            </Card>
-           {this.state.isEditing &&
-            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered success onPress={() => this.salvarEndereco(this.state.nomeLocal,this.state.logradouro,this.state.setor,this.state.numero,this.state.complemento) } >
-                <Text style={{fontWeight:'bold',marginLeft:-5}}>Salvar Endereço</Text>
+           <Card>
+              <CardItem header style={{justifyContent:'space-between'}} >
+              
+                <Text style={{fontSize:25,fontWeight:'800'}}>Dados do pedido</Text>
+               
+              </CardItem>
+              <Content>
+                  <Card style={styles.card}>
+                    <Text style={{padding:2,fontWeight:'700',fontSize: 22,marginLeft:10,marginTop:5}}>Status: {this.state.status["mensagem"]}</Text>
+                    <Text style={{padding:2,fontWeight:'500',fontSize: 18,marginLeft:10}}>Data e Hora: {this.state.dataHora}</Text>
+                  <CardItem >
+                 
+                      <Body >
+              
+                        <Text style={{fontSize:20,fontWeight:'700'}}>Itens do Pedido</Text>
+                        <Text style={styles.TextField}>{this.state.itens}</Text>
+                        
+                        
+                      </Body>
+                      
+                      
+                  </CardItem>
+               <Text style={{fontSize:20,fontWeight:'700',color:"#3f3fff",marginLeft:10}}>Quantidade total: {this.state.qtdTotal}</Text>
+                <Text style={{fontSize:20,fontWeight:'700',color:"#383",marginLeft:10,marginVertical:5}}>Valor Total: {this.state.valorTotal.toFixed(2).replace(".",",")}</Text>
+              </Card>    
+                
+                
+              </Content>
+             
+           </Card>
+            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered danger onPress={() => this.cancelarPedido("CANCELADO","Cancelado pelo Vendedor")} >
+                <Text style={{fontWeight:'bold',marginLeft:-5}}>Negar Pedido</Text>
             </Button>
-           }
-           {!this.state.isEditing && 
-            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered danger onPress={() => this.desativarEndereco() } >
-                <Text style={{fontWeight:'bold',marginLeft:-5}}>Destativar Endereço</Text>
+            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} success onPress={() => this.aprovarPedido() } >
+                <Text style={{fontWeight:'bold',marginLeft:-5}}>Aprovar Pedido</Text>
             </Button>
-           }
+           
+         
+            
+           
             </ScrollView>
          </Container>
        
@@ -259,6 +413,12 @@ inputWrap: {
 
   marginBottom: 10
 },
+TextField:{
+  padding:2,
+  fontWeight:'500',
+  fontSize: 18
+},
+
 
   list:{
      marginBottom:75,

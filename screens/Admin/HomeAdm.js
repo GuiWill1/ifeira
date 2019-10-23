@@ -1,5 +1,5 @@
 import React,{Component}from 'react';
-import { Container, Header, Content, Card, CardItem, Text, Body, Button,Tabs,Tab} from 'native-base';
+import { Container,  Content, Card, CardItem, Text, Body, Button,Tabs,Tab} from 'native-base';
 import {
   SafeAreaView,
   StyleSheet,
@@ -50,15 +50,15 @@ export default class HomeAdm extends Component {
 
   constructor(props){ 
     super(props) 
-    this.getItensNovos()
-    this.getItensAprovados()
+    
     this.state = {
       pedidos:[],
       pedidosAprovados: [],
 
       count:0,
       total:0.0,
-      noItem:false,
+      noItemAprovado:false,
+      noItemNovos:false,
       idCliente:"",
       idFornecedor:"",
       itens:[],
@@ -71,6 +71,7 @@ export default class HomeAdm extends Component {
   }
   
   this.renderRow = this.renderRow.bind(this);
+  this.visualizar = this.visualizar.bind(this)
 
   }
   
@@ -80,7 +81,8 @@ componentWillMount(){
 }
 componentDidMount(){
  
-  
+  this.getItensNovos()
+  this.getItensAprovados()
   
 }
 getItensAprovados(){
@@ -91,7 +93,7 @@ getItensAprovados(){
       
         changes.forEach(change =>{
           if(change.type == 'added'){
-            console.log("ninjaadicionou pedido")
+            console.log("aprovado adicionou pedido")
               const { dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco} = change.doc.data();
               const idVenda =  change.doc.id;
               if(status['status'] === "APROVADO"){
@@ -101,7 +103,7 @@ getItensAprovados(){
             
             
           }else if(change.type == 'modified'){
-       
+            console.log("aprovado modificou pedido")
             const { dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco} = change.doc.data();
             const idVenda =  change.doc.id;
             
@@ -118,7 +120,7 @@ getItensAprovados(){
              }
             }
           }else if(change.type == 'removed'){
-            console.log("removeu",change.doc.id)
+            console.log(" aprovado removeu",change.doc.id)
             for (let i in pedidosAprovados){
               if(pedidosAprovados[i].idVenda === change.doc.id){
                 pedidosAprovados.splice(i,1)
@@ -128,9 +130,9 @@ getItensAprovados(){
       });
        
        if(pedidosAprovados.length==0){
-        this.setState({noItem:true})
+        this.setState({noItemAprovado:true})
        }else{
-         this.setState({noItem:false})
+         this.setState({noItemAprovado:false})
        }
        console.log("ARRAYPROD:",pedidosAprovados.length)
        
@@ -149,7 +151,7 @@ getItensAprovados(){
 getItensNovos(){
     var user = firebase.auth().currentUser 
        
-  db.collection("Pedidos").where("finalizado",'==',false).orderBy("dataHora",'desc').onSnapshot(snapshot =>{
+  db.collection("Pedidos").where("finalizado",'==',false).orderBy("dataHora",'asc').onSnapshot(snapshot =>{
       let changes = snapshot.docChanges();
       
         changes.forEach(change =>{
@@ -158,7 +160,10 @@ getItensNovos(){
               const { dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco} = change.doc.data();
               const idVenda =  change.doc.id;
               if(status['status'] === "EM_ESPERA"){
+                console.log("Status é igual")
                 pedidos.push({idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco});
+              }else{
+                console.log("Não é igual")
               }
               
             
@@ -191,9 +196,10 @@ getItensNovos(){
       });
        
        if(pedidos.length==0){
-        this.setState({noItem:true})
+         console.log("pedidos é 0")
+        this.setState({noItemNovos:true})
        }else{
-         this.setState({noItem:false})
+         this.setState({noItemNovos:false})
        }
        console.log("ARRAYPROD:",pedidos.length)
        
@@ -204,7 +210,7 @@ getItensNovos(){
       })
       
       console.log("STATEPROD:",this.state.pedidos.length)
-
+     
       
       
   })
@@ -226,7 +232,7 @@ NoItems(){
         
       />
           </View>
-          <Text style={{fontWeight:'700', fontSize:23,marginTop:5}}>Você ainda não fez pedidos</Text>
+          <Text style={{fontWeight:'700', fontSize:23,marginTop:5}}>Nenhum pedido</Text>
       </View>
 
       
@@ -397,7 +403,7 @@ renderRow(item){
                             Quantidade de itens: {item.qtdTotal}
                           </Text>
                           <Text style={{marginLeft:6,marginTop:0}}>Endereço: {item.endereco["nomeLocal"]}</Text>
-                          <Text style={styles.postPrice}>Valor Total: R${item.valorTotal.toFixed(2).replace(".",",")}</Text>
+                          
                           
                       </Body>
                       
@@ -406,11 +412,9 @@ renderRow(item){
                   <CardItem footer style={{borderBottomStartRadius:8,borderBottomEndRadius:8,height:53,backgroundColor:'#3e64ff'}}>
                     <View style={styles.footerRow}>
                       <View style={{flex:1,width:'60%'}}>
-                        <TouchableOpacity style={{marginLeft:-16,backgroundColor:'#3f3fff',padding:5,height:53,alignItems:'center',borderBottomEndRadius:30,borderBottomStartRadius:8}} onPress={() => this.sendOnWhatsApp(item)}>
-                            <Image style={{width:25,height:25}}
-                              source={require('../../assets/images/whatsapp.png')}/>
-                               <Text style={{fontWeight:'bold',color:'#fff'}}>Contatar Vendedor</Text>
-                          </TouchableOpacity>
+                        <View style={{marginLeft:-19,backgroundColor:'#3f3fff',padding:5,height:53,alignItems:'center',borderBottomEndRadius:30,borderBottomStartRadius:8}} onPress={() => this.sendOnWhatsApp(item)}>
+                          <Text style={{fontWeight: 'bold',fontSize:20,paddingTop:10,color: "#fff",marginLeft:6}}>Total: R${item.valorTotal.toFixed(2).replace(".",",")}</Text>
+                          </View>
                       </View>
                       <View style={styles.footertWrap}>
                         <Button transparent  onPress={() => {
@@ -443,8 +447,8 @@ renderRow(item){
             <Container style={{marginLeft:8,marginRight:8}}>
             <Tabs>
                 <Tab heading="Novos Pedidos">
-                {this.state.noItem && this.NoItems()}
-              {!this.state.noItem &&  <FlatList 
+                {this.state.noItemNovos && this.NoItems()}
+              {!this.state.noItemNovos &&  <FlatList 
                           style={styles.list}
                           data={this.state.pedidos}
                           keyExtractor={item => item.idProduto}
@@ -460,9 +464,9 @@ renderRow(item){
                       />
               }
                 </Tab>
-                <Tab heading="Pedidos Aprovados">
-                {this.state.noItem && this.NoItems()}
-              {!this.state.noItem &&  <FlatList 
+                <Tab heading="Pedidos em andamento">
+                {this.state.noItemAprovado && this.NoItems()}
+              {!this.state.noItemAprovado &&  <FlatList 
                           style={styles.list}
                           data={this.state.pedidosAprovados}
                           keyExtractor={item => item.idProduto}

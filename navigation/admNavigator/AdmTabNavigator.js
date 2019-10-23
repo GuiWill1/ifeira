@@ -6,7 +6,7 @@ import TabBarIcon from '../../components/TabBarIcon';
 import HomeAdmScreen from '../../screens/Admin/HomeAdm';
 import Produtos from '../../screens/Admin/Produtos';
 import Pedido from '../../screens/Admin/Pedido'
-
+import CadastrarProduto from '../../screens/Admin/CadastrarProduto'
 
 const HomeAdmStack = createStackNavigator(
   {
@@ -29,6 +29,7 @@ HomeAdmStack.path = '';
 const ProdutosStack = createStackNavigator(
     {
       Produtos: Produtos,
+      CadastrarProduto : CadastrarProduto
     },
   
   );

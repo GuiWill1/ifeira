@@ -339,7 +339,7 @@ renderModal(){
   
     elevation: 8 
     }}>
-    <Text style={{fontSize:20,color:"#444",fontWeight:'800',marginTop:5}}>Endereço Selecionado:</Text>
+    <Text style={{fontSize:20,color:"#444",fontWeight:'800',marginTop:5,marginBottom:-5}}>Endereço Selecionado:</Text>
           <View style={{backgroundColor:'#3b5',borderRadius:20,padding:10,marginLeft:3,marginTop:8,marginBottom:8,alignItems:'center'}}>
             
             <Text style={{fontSize:20,color:"#fff",fontWeight:'800'}}>{this.state.endereco}</Text>
@@ -400,10 +400,22 @@ finalizarPedido = async() =>{
     .then(function(snap){
       snap.forEach(Element=>{
         Element.ref.delete();
-        navigation.goBack()
+
+        //navigation.goBack(null)
+        //navigation.popToTop()
        
       })
-      Alert.alert("Pedido realizado com sucesso!","Acompanhe o andamento em 'Meus Pedidos'")
+       Alert.alert(
+      'Pedido realizado com sucesso!',
+      "Acompanhe o andamento em 'Meus Pedidos'",
+      [
+        
+        
+        {text: 'Ok', onPress: () =>  navigation.goBack() },
+      ],
+      {cancelable: false},
+    );
+     
     }).catch(function(error){
       console.log("Erro:",error)
     })
@@ -411,7 +423,7 @@ finalizarPedido = async() =>{
     console.log(error)
   })
   }
-  
+
 }
 
 getTotal = (products)=>{

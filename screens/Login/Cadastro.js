@@ -86,7 +86,7 @@ cadastrar = (nome,sobrenome,telefone1,telefone2,email,senha) => {
         if(this.state.isEditing){
           var tel2 = ""
             if(unmasked2 === ""){
-              tel2 = "N"
+              tel2 = "Não possui"
             }else{
               tel2 = unmasked2
             }
