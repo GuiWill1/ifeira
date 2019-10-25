@@ -30,6 +30,7 @@
     "react-native-gesture-handler": "~1.3.0",
     "react-native-masked-text": "^1.13.0",
     "react-native-numeric-input": "^1.8.3",
+    "react-native-picker-module": "^1.2.0",
     "react-native-ui-xg": "0.0.6",
     "react-native-vector-icons": "^6.6.0",
     "react-native-web": "^0.11.4",

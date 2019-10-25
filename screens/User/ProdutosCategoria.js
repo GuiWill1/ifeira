@@ -62,7 +62,8 @@ export default class ProdutosCategoria extends Component {
         this.state = {
           
             data:[],
-            noItem:false
+            noItem:false,
+            refresh:false
         }
         this.renderRow = this.renderRow.bind(this);
 
@@ -70,7 +71,7 @@ export default class ProdutosCategoria extends Component {
     getItens(){
         const {params} = this.props.navigation.state;
         const item = params ? params.item: null;
-        db.collection("Produtos").orderBy("visivel").where("IDcategoria","==",item.id).onSnapshot(snapshot =>{
+        db.collection("Produtos").where("visivel",'==',true).where("IDcategoria","==",item.id).onSnapshot(snapshot =>{
             let changes = snapshot.docChanges();
             
             changes.forEach(change =>{
@@ -78,14 +79,36 @@ export default class ProdutosCategoria extends Component {
                     const { categoria,imagem, nome,unidadeMedida, preco, uidFornecedor } = change.doc.data();
                     const uid =  change.doc.id;
                     products.push({ uid, categoria,imagem, nome, preco,unidadeMedida, uidFornecedor });
-                }
+                }else if(change.type == 'modified'){
+                    console.log("modificou")
+                     const { categoria,imagem, nome,unidadeMedida, preco, uidFornecedor,visivel } = change.doc.data();
+                      const uid =  change.doc.id;
+        
+                      for (let i in products) {
+                        if(products[i].uid === change.doc.id){
+                         
+                            products[i] = {uid, categoria,imagem, nome, preco,unidadeMedida, uidFornecedor,visivel}
+                          
+                       }
+                      }
+        
+                      
+                  }else if(change.type == 'removed'){
+                    console.log("removeu",change.doc.id)
+                    for (let i in products){
+                      if(products[i].uid === change.doc.id){
+                        products.splice(i,1)
+                      }
+                    }
+                  }
             });
             if(products.length==0){
                 this.setState({noItem:true})
             }
             this.setState({
              
-                data: this.state.data = products
+                data: this.state.data = products,
+                refresh: true
             })
             
              
@@ -193,7 +216,8 @@ export default class ProdutosCategoria extends Component {
                {this.state.noItem && this.NoItems()}
                {!this.state.noItem && <FlatList 
                         style={styles.list}
-                        data={this.createRows(this.state.data,columns)}
+                        data={this.state.data}
+                        extraData={this.state}
                         keyExtractor={item => item.id}
                         numColumns={columns}
                         renderItem={({item}) => {

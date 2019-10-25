@@ -17,7 +17,7 @@ import {
   ImageBackground
  
 } from 'react-native';
-
+import ReactNativePickerModule from 'react-native-picker-module'
 
 import firebase from 'firebase';
 import '@firebase/firestore';
@@ -29,7 +29,7 @@ import { TouchableHighlight, FlatList, TextInput } from 'react-native-gesture-ha
 const db = firebase.firestore() 
 
 const products = [];
-
+const categorias = [];
 
 export default class CadastrarProduto extends Component {
   static navigationOptions = {
@@ -70,6 +70,8 @@ export default class CadastrarProduto extends Component {
       primeiroCadastro: false,
       isEditing: false,
 
+      selectedValue: null,
+      categorias:[]
     
   }
  
@@ -80,11 +82,12 @@ export default class CadastrarProduto extends Component {
   
 componentWillMount(){
  this.getProduto()
+ categorias.length = 0
   
 }
 componentDidMount(){
    this.getPermissionAsync();
- 
+   this.getTodasCategorias()
   
 }
   getPermissionAsync = async () => {
@@ -129,14 +132,14 @@ getProduto(){
             IDcategoria: this.state.IDcategoria = IDcategoria ,
             imagem: this.state.imagem = imagem, 
             nome: this.state.nome = nome, 
-            preco: this.state.preco = preco,
+            preco: this.state.preco = preco.toFixed(2).replace(".",","),
             unidadeMedida: this.state.unidadeMedida = unidadeMedida, 
             uidFornecedor: this.state.uidFornecedor = uidFornecedor,
             visivel: this.state.visivel = visivel,
              
           })
            
-        this.checkCategoria()
+        this.checkCategoriaNome()
       }else{
         this.setState({
           primeiroCadastro: true,
@@ -156,7 +159,10 @@ getProduto(){
       primeiroCadastro: true,
       isEditing: true,
       title:'Cadastrar',
-      inputEditable:true
+      inputEditable:true,
+      visivel:false,
+      imagem: this.state.imagem = "https://firebasestorage.googleapis.com/v0/b/ifeira-302ca.appspot.com/o/logo.png?alt=media&token=5823e063-ee24-41e4-8041-2d9cc074be19", 
+      nomeCategoria:this.state.nomeCategoria = "Selecionar"
     })
   }
 
@@ -182,77 +188,108 @@ desativarEndereco(){
         Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
       });
 }
-salvarEndereco(nomeLocal,logradouro,setor,numero,complemento){
+salvar=(uid,IDcategoria,nomeCategoria,imagem,nome,preco,unidadeMedida,uidFornecedor,visivel)=>{
   var user = firebase.auth().currentUser 
   const {navigation} = this.props;
-
-  if(nomeLocal==""){
-    Alert.alert("Oops!","O campo Nome do local não pode ser vazio")
-  }else if(logradouro == ""){
-    Alert.alert("Oops!","O campo logradouro não pode ser vazio")
-  }else if(setor == ""){
-    Alert.alert("Oops!","O campo de setor não pode ser vazio")
-  }else if(numero == ""){
-    Alert.alert("Oops!","O campo de numero não pode ser vazio")
+  const {params} = this.props.navigation.state;
+  const item = params ? params.item: null;
+  if(nome==""){
+    Alert.alert("Oops!","O campo Nome não pode ser vazio")
+  }else if(unidadeMedida == ""){
+    Alert.alert("Oops!","O campo Unidade de Medida não pode ser vazio")
+  }else if(preco == ""){
+    Alert.alert("Oops!","O campo de preço não pode ser vazio")
+  }else if(this.state.nomeCategoria ==="Selecionar"){
+    Alert.alert("Oops!","Selecione uma categoria para o produto")
   }else{
-    if(complemento ==""){
-      complemento = "Sem complemento"
-    }
-    console.log(nomeLocal+
-      "\n"+logradouro+
-      "\n"+setor+
-      "\n"+numero+
-      "\n"+complemento)
-
-      const {params} = this.props.navigation.state;
-      const item = params ? params.item: null;
-      if(item){
-        db.collection("Cliente").doc(user.uid).collection("Endereco").doc(item.id).set({
-          nomeLocal: nomeLocal,
-          complemento: complemento,
-          logradouro: logradouro,
-          numero: numero,
-          setor: setor,
-          ativo:true
-    
-          })
-          .then(function() {
-            alert("Salvo com sucesso!")
-            navigation.goBack()
-          })
-          .catch(function(error) {
-           
-            Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
-          });
-          
-      }else{
-        db.collection("Cliente").doc(user.uid).collection("Endereco").doc().set({
-          nomeLocal: nomeLocal,
-          complemento: complemento,
-          logradouro: logradouro,
-          numero: numero,
-          setor: setor,
-          ativo:true
-    
-          })
-          .then(function() {
-            alert("Salvo com sucesso!")
-            navigation.goBack()
-          })
-          .catch(function(error) {
-           
-            Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
-          });
-          
+    var precoDouble = parseFloat(preco.replace(",","."))
+    for(index = 0; index<this.state.categorias.length;index++){
+     
+      if(this.state.categorias[index].nome === this.state.nomeCategoria) {
+        console.log("existe")
+        console.log("ID velho",IDcategoria)
+        console.log("ID novo",this.state.categorias[index].id)
+        IDcategoria = this.state.categorias[index].id
       }
+      else {
+        // does exist
+        console.log("N existe")
+      }
+    }
+   
+    
+    if(item){
+      console.log("ID:",IDcategoria)
+      db.collection("Produtos").doc(item.uid).update({
+        IDcategoria: IDcategoria,
+        imagem: imagem,
+        nome: nome,
+        preco: precoDouble,
+        uidFornecedor:uidFornecedor,
+        unidadeMedida: unidadeMedida,
+        visivel: visivel
+  
+        })
+        .then(function() {
+          alert("Salvo com sucesso!")
+          navigation.goBack()
+        })
+        .catch(function(error) {
+         
+          Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
+        });
+    }else{
+      db.collection("Produtos").doc().set({
+        IDcategoria: IDcategoria,
+        imagem: imagem,
+        nome: nome,
+        preco: precoDouble,
+        uidFornecedor:user.uid,
+        unidadeMedida: unidadeMedida,
+        visivel: visivel
+  
+        })
+        .then(function() {
+          alert("Salvo com sucesso!")
+          navigation.goBack()
+        })
+        .catch(function(error) {
+         
+          Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
+        });
+    }
+        
+          
+      
       
 
     }
 
 }
+getTodasCategorias(){
+  db.collection("Categorias").onSnapshot(snapshot =>{
+    let changes = snapshot.docChanges();
+    changes.forEach(change =>{
+      if(change.type == 'added'){
+        const {imagem, nome } = change.doc.data();
+        const id =  change.doc.id;
+        //products.push({ id, imagem, nome });
+        categorias.push({id,imagem,nome})
+      }
+    })
+    this.setState({
+        
+      categorias: this.state.categorias = categorias,
+      
+    })
+    //console.log(categorias)
   
-checkCategoria(){
-    console.log("IDCATEGORIA:",this.state.IDcategoria)
+    
+      
+  })
+}
+checkCategoriaNome(){
+    console.log("IDCATEGORIA check:",this.state.IDcategoria)
   db.collection("Categorias").doc(this.state.IDcategoria).onSnapshot(snapshot =>{
   
       if(snapshot.exists){
@@ -261,17 +298,25 @@ checkCategoria(){
               //products.push({ id, imagem, nome });
           
       
-          this.setState({
+              this.setState({
           
-            nomeCategoria: this.state.nomeCategoria = nome,
-    
-          })
+                nomeCategoria: this.state.nomeCategoria = nome,
+        
+              })
+              console.log("NOME NINJA:",this.state.nomeCategoria)
           
       }else{
         console.log("nao tem")
+        
       }
      
-      
+    if(this.state.nomeCategoria === ""){
+      this.setState({
+          
+        nomeCategoria: this.state.nomeCategoria = "Selecionar",
+
+      })
+    }
     
         
         
@@ -291,6 +336,16 @@ checkStatus(){
    
   }
 }
+getTodosNomesCategoria(){
+  var nomes = []
+  this.state.categorias.forEach(function(element, index, array){
+    nomes.push(element["nome"])
+    
+  })
+
+  return nomes
+}
+
 renderRow(){
   
   
@@ -302,8 +357,10 @@ renderRow(){
                               <View style={styles.cardProdImage}>
                         <ImageBackground style={{flex:1,height:'100%',width:'100%', resizeMode: 'contain',borderRadius:8}}
                             source={{ uri: this.state.imagem}}></ImageBackground>
-                            <View style={{backgroundColor:'#25B',borderRadius:4,padding:5,marginTop:5}}><Text style={{color:'#fff',fontWeight:'bold'}}>Escolher Imagem</Text></View> 
+                            <View style={{backgroundColor:'#25B',padding:5,marginTop:5,width:164,alignItems: 'center', 
+    justifyContent: 'center',}}><Text style={{color:'#fff',fontWeight:'bold'}}>Escolher Imagem</Text></View> 
                         </View>
+                      
                         </TouchableOpacity>
           <Card style={styles.card}>
                 
@@ -311,8 +368,27 @@ renderRow(){
                  
                       <Body >
                       <Text>Categoria do produto</Text>
-                      <View style={{backgroundColor:'#25b',borderRadius:4,padding:5,marginTop:5,alignItems: 'center', 
-    justifyContent: 'center'}}><Text style={{color:'#fff',fontWeight:'bold'}}>{this.state.nomeCategoria}</Text></View>
+                      
+                          
+                          <TouchableOpacity disabled={!this.state.inputEditable} onPress={() => {this.pickerRef.show()}}>
+                              <View style={{backgroundColor:'#25b',borderRadius:4,padding:5,marginTop:5,alignItems: 'center', 
+                              justifyContent: 'center'}}><Text style={{color:'#fff',fontWeight:'bold'}}>{this.state.nomeCategoria}</Text></View>
+                          </TouchableOpacity>
+
+                        <ReactNativePickerModule
+                          pickerRef={e => this.pickerRef = e}
+                          value={this.state.selectedValue}
+                          title={"Selecionar Categoria"}
+                          items={this.getTodosNomesCategoria()}
+                          onValueChange={(index) => {
+                            this.setState({
+                              selectedValue: index,
+                              nomeCategoria: this.state.nomeCategoria = index
+                            })
+                          console.log(index)
+                        }}/>
+  
+                          
                           <Text>Status do produto</Text>
                           <View style={styles.row}>
                               <View style={styles.inputWrap}>
@@ -396,8 +472,8 @@ editar(){
     
            </Card>
            {this.state.isEditing &&
-            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered success onPress={() => this.salvarEndereco(this.state.nomeLocal,this.state.logradouro,this.state.setor,this.state.numero,this.state.complemento) } >
-                <Text style={{fontWeight:'bold',marginLeft:-5}}>Salvar Produto</Text>
+            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered success onPress={() => this.salvar(this.state.uid,this.state.IDcategoria,this.state.nomeCategoria,this.state.imagem,this.state.nome,this.state.preco,this.state.unidadeMedida,this.state.uidFornecedor,this.state.visivel ) } >
+                <Text style={{fontWeight:'bold',marginLeft:-5}}>Salvar</Text> 
             </Button>
            }
            {!this.state.isEditing && 
@@ -491,7 +567,7 @@ inputWrap: {
       height: 165,
       width: 165,
       borderColor:"#cccc",
-      borderRadius: 8,
+     
       borderWidth:1,
       marginBottom:18,
     

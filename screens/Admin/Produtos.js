@@ -210,7 +210,7 @@ renderRow(item){
             
         <View style={styles.row}>
                 <View style={styles.ButtonWrap}>
-                    <Button  style={styles.buttonCat} iconLeft onPress={()=>{this.props.navigation.navigate('Categoria')}} >
+                    <Button  style={styles.buttonCat} iconLeft onPress={()=>{this.props.navigation.navigate('CadastrarProduto')}} >
                             <Icon name='grid' />
                         <Text style={{fontWeight:'bold'}}>Cadastrar</Text>
                     </Button>
