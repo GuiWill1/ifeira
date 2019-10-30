@@ -31,10 +31,10 @@ const db = firebase.firestore()
 const products = [];
 const categorias = [];
 
-export default class CadastrarProduto extends Component {
+export default class CadastrarCategoria extends Component {
   static navigationOptions = {
     
-    headerTitle: 'Produto',
+    headerTitle: 'Categoria',
     mode:'modal',
     ...Platform.select({
      
@@ -123,7 +123,7 @@ uploadImage = async (uri, imageName) =>{
   const blob = await response.blob();
   var prodID = this.state.uid
   var ref = firebase.storage().ref()
-  var task = ref.child("imagens/"+prodID).put(blob)
+  var task = ref.child("imagensCategoria/"+prodID).put(blob)
 
   task.then(snapshot=>{
     var progress = (snapshot.bytesTransferred/snapshot.totalBytes) * 100
@@ -440,19 +440,11 @@ renderRow(){
                               
                             </View>
                         
-                          <Text>Nome do Produto</Text>
+                          <Text>Nome da Categoria</Text>
                             <Item regular style={styles.input} >
                               <Input editable={this.state.inputEditable} value={this.state.nome} onChangeText={(nome) => this.setState({nome})} placeholderTextColor="#CCCC"  placeholder="Tomate" keyboardType='ascii-capable'/>
                             </Item>
                             
-                            <Text>Unidade Medida </Text>
-                            <Item regular style={styles.input} >
-                              <Input editable={this.state.inputEditable} value={this.state.unidadeMedida} onChangeText={(unidadeMedida) => this.setState({unidadeMedida})} placeholderTextColor="#CCCC"  placeholder="Ex: UN,Kg,L,ML" keyboardType='ascii-capable'/>
-                            </Item>
-                            <Text>Preço</Text>
-                            <Item regular style={styles.input} >
-                              <Input editable={this.state.inputEditable} value={this.state.preco.toString()} onChangeText={(preco) => this.setState({preco})} placeholderTextColor="#CCCC"  placeholder="3.50" keyboardType='numeric' />
-                            </Item>
                             
                           
                            

@@ -179,7 +179,7 @@ cancelarPedido(){
     db.collection("Pedidos").doc(this.state.idVenda).update({
       status:{
         status: "CANCELADO",
-        mensagem: "Pedido reprovado pelo vendedor"
+        mensagem: "Cancelado pelo vendedor"
       },
        
 
@@ -188,7 +188,7 @@ cancelarPedido(){
        
         //navigation.goBack(null)
         //navigation.popToTop()
-        //navigation.goBack()
+        navigation.goBack()
         Alert.alert(
       ':)',
       "Status atualizado com sucesso!",
@@ -224,7 +224,7 @@ aprovarPedido = ()=>{
        
         //
         //navigation.popToTop()
-        //navigation.goBack()
+        navigation.goBack()
         Alert.alert(
       ':)',
       "Status atualizado com sucesso!",

@@ -11,7 +11,8 @@ import {
   TouchableOpacity,
   ScrollView,
   AsyncStorage,
-  ImageBackground
+  ImageBackground,
+
 } from 'react-native';
 
 
@@ -212,25 +213,21 @@ renderRow(item){
                 <View style={styles.ButtonWrap}>
                     <Button  style={styles.buttonCat} iconLeft onPress={()=>{this.props.navigation.navigate('CadastrarProduto')}} >
                             <Icon name='grid' />
-                        <Text style={{fontWeight:'bold'}}>Cadastrar</Text>
+                        <Text style={{fontWeight:'bold'}}>Produto</Text>
                     </Button>
                     
                 </View>
                 <View style={styles.ButtonWrap}>
-                    <Button  style={styles.buttonCat} iconLeft onPress={()=>{this.props.navigation.navigate('Categoria')}} >
-                            <Icon name='search' />
-                        <Text style={{fontWeight:'bold'}}>Buscar</Text>
+                    <Button  style={styles.buttonCat} iconLeft onPress={()=>{this.props.navigation.navigate('CadastrarCategoria')}} >
+                            <Icon name='grid' />
+                        <Text style={{fontWeight:'bold'}}>Categoria</Text>
                     </Button>
                     
                 </View>
                 
             </View>
               
-          <Button
-    onPress={() => firebase.auth().signOut()}
-    title="Sair"
-    color="#3333ff"
-  />
+
                  <FlatList 
                           style={styles.list}
                           data={this.state.data}//createRows(this.state.data,columns)}

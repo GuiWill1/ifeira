@@ -31,10 +31,10 @@ const db = firebase.firestore()
 const products = [];
 const categorias = [];
 
-export default class CadastrarProduto extends Component {
+export default class Ajustes extends Component {
   static navigationOptions = {
     
-    headerTitle: 'Produto',
+    headerTitle: 'Ajustes',
     mode:'modal',
     ...Platform.select({
      
@@ -510,6 +510,10 @@ editar(){
                 <Text style={{fontWeight:'bold',marginLeft:-5}}>Destativar Produto</Text>
             </Button>
            }
+           <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered danger onPress={() =>  Firebase.auth().signOut()} >
+                <Text style={{fontWeight:'bold',marginLeft:-5}}>Destativar Produto</Text>
+            </Button>
+           
             </ScrollView>
          </Container>
        

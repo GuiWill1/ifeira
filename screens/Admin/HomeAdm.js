@@ -96,7 +96,7 @@ getItensAprovados(){
             console.log("aprovado adicionou pedido")
               const { dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco} = change.doc.data();
               const idVenda =  change.doc.id;
-              if(status['status'] === "APROVADO"){
+              if(status['status'] === "APROVADO" || status['status'] === "CANCELADO"){
                 pedidosAprovados.push({idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco});
               }
               

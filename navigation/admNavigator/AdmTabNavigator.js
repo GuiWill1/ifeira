@@ -7,6 +7,8 @@ import HomeAdmScreen from '../../screens/Admin/HomeAdm';
 import Produtos from '../../screens/Admin/Produtos';
 import Pedido from '../../screens/Admin/Pedido'
 import CadastrarProduto from '../../screens/Admin/CadastrarProduto'
+import Ajustes from '../../screens/Admin/Ajustes'
+import CadastrarCategoria from '../../screens/Admin/CadastrarCategoria'
 
 const HomeAdmStack = createStackNavigator(
   {
@@ -26,10 +28,28 @@ HomeAdmStack.navigationOptions = {
 
 HomeAdmStack.path = '';
 
+const AjustesAdmStack = createStackNavigator(
+  {
+    Ajustes: Ajustes
+  },
+
+);
+
+AjustesAdmStack.navigationOptions = {
+  tabBarLabel: 'Ajustes',
+  tabBarIcon: ({ focused }) => (
+    <TabBarIcon focused={focused} name={Platform.OS === 'ios' ? 'md-settings' : 'md-settings'} />
+  ),
+  
+};
+
+AjustesAdmStack.path = '';
+
 const ProdutosStack = createStackNavigator(
     {
       Produtos: Produtos,
-      CadastrarProduto : CadastrarProduto
+      CadastrarProduto : CadastrarProduto,
+      CadastrarCategoria : CadastrarCategoria
     },
   
   );
@@ -46,7 +66,8 @@ ProdutosStack.path = '';
 
 const tabNavigator = createBottomTabNavigator({
     HomeAdmStack,
-    ProdutosStack
+    ProdutosStack,
+    AjustesAdmStack
 });
 
 tabNavigator.path = '';
