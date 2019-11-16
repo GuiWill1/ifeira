@@ -201,7 +201,7 @@ getProduto(){
 
 
 }
-desativarEndereco(){
+desativarProduto(){
   const {navigation} = this.props;
   db.collection("Produtos").doc(this.state.uid).update({
     visivel:false
@@ -216,6 +216,21 @@ desativarEndereco(){
       Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
     });
     
+}
+ativarProduto(){
+  const {navigation} = this.props;
+  db.collection("Produtos").doc(this.state.uid).update({
+    visivel:true
+
+    })
+    .then(function() {
+      Alert.alert(":)","Ativado com sucesso!")
+      navigation.goBack()
+    })
+    .catch(function(error) {
+     
+      Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
+    });
 }
 salvar=(uid,IDcategoria,nomeCategoria,imagem,nome,preco,unidadeMedida,uidFornecedor,visivel)=>{
   var user = firebase.auth().currentUser 
@@ -505,9 +520,14 @@ editar(){
                 <Text style={{fontWeight:'bold',marginLeft:-5}}>Salvar</Text> 
             </Button>
            }
-           {!this.state.isEditing && 
-            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered danger onPress={() => this.desativarEndereco() } >
+           {!this.state.isEditing && this.state.visivel &&
+            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered danger onPress={() => this.desativarProduto() } >
                 <Text style={{fontWeight:'bold',marginLeft:-5}}>Destativar Produto</Text>
+            </Button>
+           }
+           {!this.state.isEditing && !this.state.visivel &&
+            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered success onPress={() => this.ativarProduto()} >
+                <Text style={{fontWeight:'bold',marginLeft:-5}}>Ativar Produto</Text>
             </Button>
            }
             </ScrollView>

@@ -56,16 +56,11 @@ export default class CadastrarCategoria extends Component {
  
     
     this.state = {
-      uid:"", 
-      IDcategoria:"",
-      nomeCategoria:"",
+      id:"", 
+      categoria:"",
       imagem:"", 
-      nome:"", 
-      preco:"",
-      unidadeMedida:"", 
-      uidFornecedor:"",
-      visivel:Boolean, 
-
+      nome:"",
+      
       inputEditable:false,
       primeiroCadastro: false,
       isEditing: false,
@@ -87,7 +82,7 @@ componentWillMount(){
 }
 componentDidMount(){
    this.getPermissionAsync();
-   this.getTodasCategorias()
+
   
 }
   getPermissionAsync = async () => {
@@ -148,54 +143,23 @@ uploadImage = async (uri, imageName) =>{
 getProduto(){
   const {params} = this.props.navigation.state;
   const item = params ? params.item: null;
-  var user = firebase.auth().currentUser 
-  if(item){
-    db.collection("Produtos").doc(item.uid).onSnapshot(snapshot =>{
-  
-      if(snapshot.exists){
-        const { IDcategoria,imagem, nome,unidadeMedida, preco, uidFornecedor,visivel } = snapshot.data();
-              const uid =  snapshot.id;
-              products.push({ uid, IDcategoria,imagem, nome, preco,unidadeMedida, uidFornecedor,visivel });
-          
-      
-          this.setState({
-          
 
-            uid: this.state.uid = uid, 
-            IDcategoria: this.state.IDcategoria = IDcategoria ,
-            imagem: this.state.imagem = imagem, 
-            nome: this.state.nome = nome, 
-            preco: this.state.preco = preco.toFixed(2).replace(".",","),
-            unidadeMedida: this.state.unidadeMedida = unidadeMedida, 
-            uidFornecedor: this.state.uidFornecedor = uidFornecedor,
-            visivel: this.state.visivel = visivel,
-             
+  if(item){
+  
+          this.setState({
+            id : this.state.id = item.id,
+            nome : this.state.nome = item.nome,
+            imagem : this.state.imagem = item.imagem,
+            title: 'Editar'
           })
-           
-        this.checkCategoriaNome()
-      }else{
-        this.setState({
-          primeiroCadastro: true,
-          isEditing: true,
-          title:'Cadastrar',
-          inputEditable:true
-        })
-      }
-     
-      
-    
-        
-        
-    })
+
+
   }else{
     this.setState({
-      primeiroCadastro: true,
-      isEditing: true,
+      Cadastro: true,
       title:'Cadastrar',
-      inputEditable:true,
-      visivel:false,
       imagem: this.state.imagem = "https://firebasestorage.googleapis.com/v0/b/ifeira-302ca.appspot.com/o/logo.png?alt=media&token=5823e063-ee24-41e4-8041-2d9cc074be19", 
-      nomeCategoria:this.state.nomeCategoria = "Selecionar"
+     
     })
   }
 
@@ -295,93 +259,17 @@ salvar=(uid,IDcategoria,nomeCategoria,imagem,nome,preco,unidadeMedida,uidFornece
     }
 
 }
-getTodasCategorias(){
-  db.collection("Categorias").onSnapshot(snapshot =>{
-    let changes = snapshot.docChanges();
-    changes.forEach(change =>{
-      if(change.type == 'added'){
-        const {imagem, nome } = change.doc.data();
-        const id =  change.doc.id;
-        //products.push({ id, imagem, nome });
-        categorias.push({id,imagem,nome})
-      }
-    })
-    this.setState({
-        
-      categorias: this.state.categorias = categorias,
-      
-    })
-    //console.log(categorias)
-  
-    
-      
-  })
-}
-checkCategoriaNome(){
-    console.log("IDCATEGORIA check:",this.state.IDcategoria)
-  db.collection("Categorias").doc(this.state.IDcategoria).onSnapshot(snapshot =>{
-  
-      if(snapshot.exists){
-        const {imagem, nome } = snapshot.data();
-              const id =  snapshot.id;
-              //products.push({ id, imagem, nome });
-          
-      
-              this.setState({
-          
-                nomeCategoria: this.state.nomeCategoria = nome,
-        
-              })
-              console.log("NOME NINJA:",this.state.nomeCategoria)
-          
-      }else{
-        console.log("nao tem")
-        
-      }
-     
-    if(this.state.nomeCategoria === ""){
-      this.setState({
-          
-        nomeCategoria: this.state.nomeCategoria = "Selecionar",
 
-      })
-    }
-    
-        
-        
-    })
-}
-checkStatus(){
-  if(this.state.visivel){
-    return(
-      <View style={{backgroundColor:'#3b5',borderRadius:4,padding:5,marginTop:5,width:80,alignItems: 'center', 
-    justifyContent: 'center'}}><Text style={{color:'#fff',fontWeight:'bold'}}>ATIVO</Text></View>
-    )
-  }else{
-    return(
-       <View style={{backgroundColor:'#f33',borderRadius:4,padding:5,marginTop:5,width:80,alignItems: 'center', 
-    justifyContent: 'center'}}><Text style={{color:'#fff',fontWeight:'bold'}}>INATIVO</Text></View>
-    )
-   
-  }
-}
-getTodosNomesCategoria(){
-  var nomes = []
-  this.state.categorias.forEach(function(element, index, array){
-    nomes.push(element["nome"])
-    
-  })
 
-  return nomes
-}
+
 
 renderRow(){
   
   
   return(
      
-    <Content>
-          <TouchableOpacity disabled={!this.state.inputEditable} onPress={this._pickImage} style={{alignItems: 'center', 
+  <View>
+          <TouchableOpacity onPress={this._pickImage} style={{alignItems: 'center', 
     justifyContent: 'center', }}>
                               <View style={styles.cardProdImage}>
                         <ImageBackground style={{flex:1,height:'100%',width:'100%', resizeMode: 'contain',borderRadius:8}}
@@ -396,53 +284,14 @@ renderRow(){
                   <CardItem >
                  
                       <Body >
-                      <Text>Categoria do produto</Text>
                       
-                          
-                          <TouchableOpacity disabled={!this.state.inputEditable} onPress={() => {this.pickerRef.show()}}>
-                              <View style={{backgroundColor:'#25b',borderRadius:4,padding:5,marginTop:5,alignItems: 'center', 
-                              justifyContent: 'center'}}><Text style={{color:'#fff',fontWeight:'bold'}}>{this.state.nomeCategoria}</Text></View>
-                          </TouchableOpacity>
-
-                        <ReactNativePickerModule
-                          pickerRef={e => this.pickerRef = e}
-                          value={this.state.selectedValue}
-                          title={"Selecionar Categoria"}
-                          items={this.getTodosNomesCategoria()}
-                          onValueChange={(index) => {
-                            this.setState({
-                              selectedValue: index,
-                              nomeCategoria: this.state.nomeCategoria = index
-                            })
-                          console.log(index)
-                        }}/>
   
                           
-                          <Text>Status do produto</Text>
-                          <View style={styles.row}>
-                              <View style={styles.inputWrap}>
-                                {this.checkStatus()}
-
-                              </View>
-                              {this.state.isEditing &&
-                              <View style={styles.inputWrap}>
-                                   <Switch   style={{marginTop:5}}
-                                onValueChange={(value)=> this.setState({visivel:this.state.visivel = value})} 
-                                value={ this.state.visivel } 
-                                />
-                                    
+                          
                             
-                               
-                                
-                                
-                              </View>
-                              }
-                              
-                            </View>
-                        
                           <Text>Nome da Categoria</Text>
                             <Item regular style={styles.input} >
-                              <Input editable={this.state.inputEditable} value={this.state.nome} onChangeText={(nome) => this.setState({nome})} placeholderTextColor="#CCCC"  placeholder="Tomate" keyboardType='ascii-capable'/>
+                              <Input  value={this.state.nome} onChangeText={(nome) => this.setState({nome})} placeholderTextColor="#CCCC"  placeholder="Tomate" keyboardType='ascii-capable'/>
                             </Item>
                             
                             
@@ -456,8 +305,8 @@ renderRow(){
                   </CardItem>
                
               </Card>    
-    </Content>
-
+   
+</View>
 
   );
 }
@@ -482,26 +331,19 @@ editar(){
               <CardItem header style={{justifyContent:'space-between'}} >
               
                 <Text style={{fontSize:25,fontWeight:'800'}}>{this.state.title}</Text>
-                {!this.state.primeiroCadastro &&
-                <TouchableOpacity style={{marginLeft:6,marginTop:5,alignItems:'center'}} onPress={() => this.editar()}>
-                  <Icon name="edit"size={20} color="#f63" light />
-                      <Text style={{fontWeight:'bold',color:"#888"}}>Editar</Text>
-                </TouchableOpacity>
-                }
+             
+               
+             
               </CardItem>
               {this.renderRow()}
     
            </Card>
-           {this.state.isEditing &&
+           
             <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered success onPress={() => this.salvar(this.state.uid,this.state.IDcategoria,this.state.nomeCategoria,this.state.imagem,this.state.nome,this.state.preco,this.state.unidadeMedida,this.state.uidFornecedor,this.state.visivel ) } >
                 <Text style={{fontWeight:'bold',marginLeft:-5}}>Salvar</Text> 
             </Button>
-           }
-           {!this.state.isEditing && 
-            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered danger onPress={() => this.desativarEndereco() } >
-                <Text style={{fontWeight:'bold',marginLeft:-5}}>Destativar Produto</Text>
-            </Button>
-           }
+          
+          
             </ScrollView>
          </Container>
        

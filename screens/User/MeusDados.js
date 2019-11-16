@@ -303,7 +303,23 @@ renderRow(item){
     
            </Card>
          
-            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered  danger onPress={() => firebase.auth().signOut()}>
+          
+            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered danger onPress={() =>  
+                Alert.alert(
+                    'Atenção',
+                    'Deseja realmente sair?',
+                    [
+                      
+                      {
+                        text: 'Cancelar',
+                        onPress: () => console.log('Cancel Pressed'),
+                        style: 'cancel',
+                      },
+                      {text: 'OK', onPress: () => firebase.auth().signOut()},
+                    ],
+                    {cancelable: false},
+                  )
+                } >
                 <Text style={{fontWeight:'bold',marginLeft:-5}}>Sair</Text>
             </Button>
             </ScrollView>

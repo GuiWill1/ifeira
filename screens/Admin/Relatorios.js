@@ -25,7 +25,7 @@ const products = [];
 
 
 
-export default class PedidosScreen extends Component {
+export default class Relatorios extends Component {
   static navigationOptions = {
     
     headerTitle: 'Meus Pedidos',
@@ -62,9 +62,6 @@ export default class PedidosScreen extends Component {
       valorTotal:0.0,
       quantidadeTotal:0,
       
-      dataEntrega:"",
-      dataPedido:"",
-      
       refresh:false
       
   }
@@ -74,47 +71,13 @@ export default class PedidosScreen extends Component {
   }
   
 componentWillMount(){
-    products.length = 0,
-    this.getData()
+    products.length = 0
    
 }
 componentDidMount(){
  
   
   
-}
-getData = () =>{
-  
-  db.collection("Data").where("id",'==',"fZXB3tPb9fJ2jZy04Zj4").onSnapshot(snapshot =>{
-    //"fZXB3tPb9fJ2jZy04Zj4"
-    let changes = snapshot.docChanges();
-    
-    changes.forEach(change =>{
-        if(change.type == 'added'){
-          console.log("Endereco add")
-            const {dataEntrega,dataPedido} = change.doc.data();
-            const id =  change.doc.id;
-            this.setState({
-              "dataEntrega": this.state.dataEntrega = dataEntrega,
-              "dataPedido": this.state.dataPedido = dataPedido
-            })
-            
-            
-            console.log(change.doc.data())
-          
-        }else if(change.type == 'modified'){
-          console.log("Endereco modified")
-          const {dataEntrega,dataPedido} = change.doc.data();
-            const id =  change.doc.id;
-            this.setState({
-              "dataEntrega": this.state.dataEntrega = dataEntrega,
-              "dataPedido": this.state.dataPedido = dataPedido
-            })
-            
-            console.log(change.doc.data())
-        }
-    })
-  })
 }
 getItens(){
     var user = firebase.auth().currentUser 
@@ -260,7 +223,7 @@ iconStatus(item){
             </View>      
           </View>
           <View style={{backgroundColor:'#3b5',borderRadius:8,padding:3,marginLeft:3,alignItems:'center'}}>
-            <Text style={{color:'#fff',fontWeight:'bold'}}>ENTREGA EM: {this.state.dataEntrega}</Text>
+            <Text style={{color:'#fff',fontWeight:'bold'}}>ENTREGA EM: 20/10/2019</Text>
           </View>
         </Content>   
      
@@ -412,17 +375,7 @@ renderRow(item){
           
          
             <Container style={{marginLeft:8,marginRight:8}}>
-            <View style={styles.row}>
-                <View style={styles.ButtonWrap}>
-                <Text style={{color:'#fff',marginRight:3,fontWeight:'bold'}}>Pedidos até {this.state.dataPedido}</Text> 
-                    
-                </View>
-                <View style={styles.ButtonWrap2}>
-                {/* <View style={{backgroundColor:'#3b5',borderRadius:8,padding:3,marginLeft:3}}><Text style={{color:'#fff',fontWeight:'bold'}}>GRÁTIS</Text></View> */} 
-                <Text style={{color:'#fff',marginRight:3,fontWeight:'bold'}}>Entregues em {this.state.dataEntrega}</Text> 
-                </View>
-                
-            </View>
+            
          
             
            

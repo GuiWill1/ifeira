@@ -9,6 +9,8 @@ import Pedido from '../../screens/Admin/Pedido'
 import CadastrarProduto from '../../screens/Admin/CadastrarProduto'
 import Ajustes from '../../screens/Admin/Ajustes'
 import CadastrarCategoria from '../../screens/Admin/CadastrarCategoria'
+import Categorias from '../../screens/Admin/Categorias';
+import Relatorios from '../../screens/Admin/Relatorios';
 
 const HomeAdmStack = createStackNavigator(
   {
@@ -45,10 +47,30 @@ AjustesAdmStack.navigationOptions = {
 
 AjustesAdmStack.path = '';
 
+
+const RelatoriosAdmStack = createStackNavigator(
+  {
+    Relatorios: Relatorios
+  },
+
+);
+
+RelatoriosAdmStack.navigationOptions = {
+  tabBarLabel: 'Relatorios',
+  tabBarIcon: ({ focused }) => (
+    <TabBarIcon focused={focused} name={Platform.OS === 'ios' ? 'md-stats' : 'md-stats'} />
+  ),
+  
+};
+
+RelatoriosAdmStack.path = '';
+
+
 const ProdutosStack = createStackNavigator(
     {
       Produtos: Produtos,
       CadastrarProduto : CadastrarProduto,
+      Categorias : Categorias,
       CadastrarCategoria : CadastrarCategoria
     },
   
@@ -67,6 +89,7 @@ ProdutosStack.path = '';
 const tabNavigator = createBottomTabNavigator({
     HomeAdmStack,
     ProdutosStack,
+    RelatoriosAdmStack,
     AjustesAdmStack
 });
 

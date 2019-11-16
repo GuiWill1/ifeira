@@ -218,7 +218,7 @@ renderRow(item){
                     
                 </View>
                 <View style={styles.ButtonWrap}>
-                    <Button  style={styles.buttonCat} iconLeft onPress={()=>{this.props.navigation.navigate('CadastrarCategoria')}} >
+                    <Button  style={styles.buttonCat} iconLeft onPress={()=>{this.props.navigation.navigate('Categorias')}} >
                             <Icon name='grid' />
                         <Text style={{fontWeight:'bold'}}>Categoria</Text>
                     </Button>

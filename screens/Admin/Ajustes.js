@@ -1,9 +1,10 @@
 import React,{ Component} from 'react';
-import { Container, Input, Content, Card, CardItem,Item, Body, Button,Text,Switch} from 'native-base';
+import { Container, Input, Content, Card, CardItem,Item, Body,Text,Switch,Button} from 'native-base';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import * as ImagePicker from 'expo-image-picker'
 import Constants from 'expo-constants';
-import * as Permissions from 'expo-permissions'
+import * as Permissions from 'expo-permissions';
+import Calendar from 'react-native-calendar-select';
 import {
   SafeAreaView,
   StyleSheet,
@@ -14,7 +15,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  ImageBackground
+  ImageBackground,
+  
  
 } from 'react-native';
 import ReactNativePickerModule from 'react-native-picker-module'
@@ -56,160 +58,98 @@ export default class Ajustes extends Component {
  
     
     this.state = {
-      uid:"", 
-      IDcategoria:"",
-      nomeCategoria:"",
-      imagem:"", 
-      nome:"", 
-      preco:"",
-      unidadeMedida:"", 
-      uidFornecedor:"",
-      visivel:Boolean, 
+    
 
-      inputEditable:false,
-      primeiroCadastro: false,
-      isEditing: false,
+      startDate: new Date(2019,11,20),  
+      endDate: new Date(2019,11,25),
 
-      selectedValue: null,
-      categorias:[]
+      dataEntrega:"",
+      dataPedido:"",
+
+      editing:false
     
   }
  
-  
+  this.confirmDate = this.confirmDate.bind(this);
+  this.openCalendar = this.openCalendar.bind(this);
 
 
   }
   
 componentWillMount(){
- this.getProduto()
- categorias.length = 0
+this.getData()
   
 }
 componentDidMount(){
-   this.getPermissionAsync();
-   this.getTodasCategorias()
+ 
   
 }
-  getPermissionAsync = async () => {
-    if (Constants.platform.ios) {
-      const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-      if (status !== 'granted') {
-        alert('Desculpe, é necessária a permissão para acessar suas fotos');
-      }
-    }
-  }
+confirmDate({startDate, endDate, startMoment, endMoment}) {
+  this.setState({
+    startDate,
+    endDate,
+    "editing":this.state.editing = true
+  });
+  
+}
+openCalendar() {
+  this.calendar && this.calendar.open();
+  
+}
 
-  _pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-    });
 
-    console.log(result);
-
-    if (!result.cancelled) {
-      this.setState({ imagem: result.uri });
-      this.uploadImage(result.uri,"produto").then(()=>{
-        alert("Imagem salva")
-      })
-      .catch((error)=>{
-        alert(error)
-      })
-    }
-  };
-uploadImage = async (uri, imageName) =>{
-  const response = await fetch(uri);
-  const blob = await response.blob();
-  var prodID = this.state.uid
-  var ref = firebase.storage().ref()
-  var task = ref.child("imagens/"+prodID).put(blob)
-
-  task.then(snapshot=>{
-    var progress = (snapshot.bytesTransferred/snapshot.totalBytes) * 100
-    console.log('Upload is '+progress+'% done')
+getData = () =>{
+  
+  db.collection("Data").where("id",'==',"fZXB3tPb9fJ2jZy04Zj4").onSnapshot(snapshot =>{
+    //"fZXB3tPb9fJ2jZy04Zj4"
+    let changes = snapshot.docChanges();
     
-    task.snapshot.ref.getDownloadURL()
-    .then(getDownloadURL =>{
-      console.log('imagem:',getDownloadURL)
-      this.setState({
-        "imagem":this.state.imagem = getDownloadURL
-      })
-      
+    changes.forEach(change =>{
+        if(change.type == 'added'){
+          console.log("Endereco add")
+            const {dataEntrega,dataPedido} = change.doc.data();
+            const id =  change.doc.id;
+            this.setState({
+              "dataEntrega": this.state.dataEntrega = dataEntrega,
+              "dataPedido": this.state.dataPedido = dataPedido
+            })
+            
+            
+            console.log(change.doc.data())
+          
+        }else if(change.type == 'modified'){
+          console.log("Endereco modified")
+          const {dataEntrega,dataPedido} = change.doc.data();
+            const id =  change.doc.id;
+            this.setState({
+              "dataEntrega": this.state.dataEntrega = dataEntrega,
+              "dataPedido": this.state.dataPedido = dataPedido
+            })
+            
+            console.log(change.doc.data())
+        }
     })
-    
   })
-  
-
-  
-
 }
 
-getProduto(){
-  const {params} = this.props.navigation.state;
-  const item = params ? params.item: null;
-  var user = firebase.auth().currentUser 
-  if(item){
-    db.collection("Produtos").doc(item.uid).onSnapshot(snapshot =>{
+SetData = () =>{
+  var options = {  month: 'numeric', day: 'numeric' };
+  var entrega = this.state.endDate.toLocaleString("pt-BR",options)
+  var pedido = this.state.startDate.toLocaleString("pt-BR",options)
+
+  var self = this
   
-      if(snapshot.exists){
-        const { IDcategoria,imagem, nome,unidadeMedida, preco, uidFornecedor,visivel } = snapshot.data();
-              const uid =  snapshot.id;
-              products.push({ uid, IDcategoria,imagem, nome, preco,unidadeMedida, uidFornecedor,visivel });
-          
-      
-          this.setState({
-          
 
-            uid: this.state.uid = uid, 
-            IDcategoria: this.state.IDcategoria = IDcategoria ,
-            imagem: this.state.imagem = imagem, 
-            nome: this.state.nome = nome, 
-            preco: this.state.preco = preco.toFixed(2).replace(".",","),
-            unidadeMedida: this.state.unidadeMedida = unidadeMedida, 
-            uidFornecedor: this.state.uidFornecedor = uidFornecedor,
-            visivel: this.state.visivel = visivel,
-             
-          })
-           
-        this.checkCategoriaNome()
-      }else{
-        this.setState({
-          primeiroCadastro: true,
-          isEditing: true,
-          title:'Cadastrar',
-          inputEditable:true
-        })
-      }
-     
-      
-    
-        
-        
-    })
-  }else{
-    this.setState({
-      primeiroCadastro: true,
-      isEditing: true,
-      title:'Cadastrar',
-      inputEditable:true,
-      visivel:false,
-      imagem: this.state.imagem = "https://firebasestorage.googleapis.com/v0/b/ifeira-302ca.appspot.com/o/logo.png?alt=media&token=5823e063-ee24-41e4-8041-2d9cc074be19", 
-      nomeCategoria:this.state.nomeCategoria = "Selecionar"
-    })
-  }
-
-
-}
-desativarEndereco(){
-  const {navigation} = this.props;
-  db.collection("Produtos").doc(this.state.uid).update({
-    visivel:false
-
+  db.collection("Data").doc("fZXB3tPb9fJ2jZy04Zj4").update({
+    dataEntrega:entrega,
+    dataPedido: pedido
     })
     .then(function() {
-      Alert.alert(":)","Desativado com sucesso!")
-      navigation.goBack()
+      Alert.alert(":)","Salva com sucesso!")
+      self.setState({
+        "editing": self.state.editing = false
+      })
+      
     })
     .catch(function(error) {
      
@@ -217,258 +157,81 @@ desativarEndereco(){
     });
     
 }
-salvar=(uid,IDcategoria,nomeCategoria,imagem,nome,preco,unidadeMedida,uidFornecedor,visivel)=>{
-  var user = firebase.auth().currentUser 
-  const {navigation} = this.props;
-  const {params} = this.props.navigation.state;
-  const item = params ? params.item: null;
-  if(nome==""){
-    Alert.alert("Oops!","O campo Nome não pode ser vazio")
-  }else if(unidadeMedida == ""){
-    Alert.alert("Oops!","O campo Unidade de Medida não pode ser vazio")
-  }else if(preco == ""){
-    Alert.alert("Oops!","O campo de preço não pode ser vazio")
-  }else if(this.state.nomeCategoria ==="Selecionar"){
-    Alert.alert("Oops!","Selecione uma categoria para o produto")
-  }else{
-    var precoDouble = parseFloat(preco.replace(",","."))
-    for(index = 0; index<this.state.categorias.length;index++){
-     
-      if(this.state.categorias[index].nome === this.state.nomeCategoria) {
-        console.log("existe")
-        console.log("ID velho",IDcategoria)
-        console.log("ID novo",this.state.categorias[index].id)
-        IDcategoria = this.state.categorias[index].id
-      }
-      else {
-        // does exist
-        console.log("N existe")
-      }
-    }
-   
-    
-    if(item){
-      console.log("ID:",IDcategoria)
-      db.collection("Produtos").doc(item.uid).update({
-        IDcategoria: IDcategoria,
-        imagem: imagem,
-        nome: nome,
-        preco: precoDouble,
-        uidFornecedor:uidFornecedor,
-        unidadeMedida: unidadeMedida,
-        visivel: visivel
-  
-        })
-        .then(function() {
-          alert("Salvo com sucesso!")
-          navigation.goBack()
-        })
-        .catch(function(error) {
-         
-          Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
-        });
-    }else{
-      db.collection("Produtos").doc().set({
-        IDcategoria: IDcategoria,
-        imagem: imagem,
-        nome: nome,
-        preco: precoDouble,
-        uidFornecedor:user.uid,
-        unidadeMedida: unidadeMedida,
-        visivel: visivel
-  
-        })
-        .then(function() {
-          alert("Salvo com sucesso!")
-          navigation.goBack()
-        })
-        .catch(function(error) {
-         
-          Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
-        });
-    }
+
         
           
       
       
 
-    }
 
-}
-getTodasCategorias(){
-  db.collection("Categorias").onSnapshot(snapshot =>{
-    let changes = snapshot.docChanges();
-    changes.forEach(change =>{
-      if(change.type == 'added'){
-        const {imagem, nome } = change.doc.data();
-        const id =  change.doc.id;
-        //products.push({ id, imagem, nome });
-        categorias.push({id,imagem,nome})
-      }
-    })
-    this.setState({
-        
-      categorias: this.state.categorias = categorias,
-      
-    })
-    //console.log(categorias)
-  
-    
-      
-  })
-}
-checkCategoriaNome(){
-    console.log("IDCATEGORIA check:",this.state.IDcategoria)
-  db.collection("Categorias").doc(this.state.IDcategoria).onSnapshot(snapshot =>{
-  
-      if(snapshot.exists){
-        const {imagem, nome } = snapshot.data();
-              const id =  snapshot.id;
-              //products.push({ id, imagem, nome });
+
+
+
+
+renderCalendar(){
+
+    // It's an optional property, I use this to show the structure of customI18n object.
+    let customI18n = {
+      'w': ['', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
+      'weekday': ['', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sabado', 'Domingo'],
+      'text': {
+        'start': 'Pedidos',
+        'end': 'Entrega',
+        'date': 'Data',
+        'save': 'Confirmar',
+        'clear': 'Limpar'
+      },
+      'date': 'DD / MM'  // date format
+    };
+    // optional property, too.
+    let color = {
+      subColor: '#f0f0f0'
+    };
+    var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return (
+      <View>
+      <Text style={{justifyContent:'center',marginTop:10,alignContent:'center',fontSize:20,fontWeight:'800'}}>Definir datas para compras e entrega</Text>
+      <Image
+                  style={{
+                  alignSelf: 'center',
+                  height: 150,
+                  width: 150,
+                  marginTop: 40,
+                }}
+                  source={require('../../assets/images/calendar.png')}
+                  
+                />
+      <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered onPress={() => this.openCalendar()} >
+                <Text style={{fontWeight:'bold',marginLeft:-5}}>Selecionar data</Text>
+            </Button>
+           {this.state.editing && <View>
+           
+             <Text>Datas selecionadas:</Text>
+              <Text>Pedido:{this.state.startDate.toLocaleString("pt-BR",options)}</Text>
+              <Text>Entrega: {this.state.endDate.toLocaleString("pt-BR",options)} </Text>
           
-      
-              this.setState({
-          
-                nomeCategoria: this.state.nomeCategoria = nome,
-        
-              })
-              console.log("NOME NINJA:",this.state.nomeCategoria)
-          
-      }else{
-        console.log("nao tem")
-        
-      }
-     
-    if(this.state.nomeCategoria === ""){
-      this.setState({
-          
-        nomeCategoria: this.state.nomeCategoria = "Selecionar",
-
-      })
-    }
-    
-        
-        
-    })
-}
-checkStatus(){
-  if(this.state.visivel){
-    return(
-      <View style={{backgroundColor:'#3b5',borderRadius:4,padding:5,marginTop:5,width:80,alignItems: 'center', 
-    justifyContent: 'center'}}><Text style={{color:'#fff',fontWeight:'bold'}}>ATIVO</Text></View>
-    )
-  }else{
-    return(
-       <View style={{backgroundColor:'#f33',borderRadius:4,padding:5,marginTop:5,width:80,alignItems: 'center', 
-    justifyContent: 'center'}}><Text style={{color:'#fff',fontWeight:'bold'}}>INATIVO</Text></View>
-    )
-   
-  }
-}
-getTodosNomesCategoria(){
-  var nomes = []
-  this.state.categorias.forEach(function(element, index, array){
-    nomes.push(element["nome"])
-    
-  })
-
-  return nomes
-}
-
-renderRow(){
+           
+            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered success onPress={() => this.SetData()} >
+                <Text style={{fontWeight:'bold',marginLeft:-5}}>Salvar data</Text>
+            </Button>
+            </View>}
+        <Calendar
+          i18n="en"
+          ref={(calendar) => {this.calendar = calendar;}}
+          customI18n={customI18n}
+          color={color}
+          format="DDMM"
+          minDate="20191110"
+          maxDate="20201115"
+          startDate={this.state.startDate}
+          endDate={this.state.endDate}
+          onConfirm={this.confirmDate}
+        />
+      </View>
+    );
   
-  
-  return(
-     
-    <Content>
-          <TouchableOpacity disabled={!this.state.inputEditable} onPress={this._pickImage} style={{alignItems: 'center', 
-    justifyContent: 'center', }}>
-                              <View style={styles.cardProdImage}>
-                        <ImageBackground style={{flex:1,height:'100%',width:'100%', resizeMode: 'contain',borderRadius:8}}
-                            source={{ uri: this.state.imagem}}></ImageBackground>
-                            <View style={{backgroundColor:'#25B',padding:5,marginTop:5,width:164,alignItems: 'center', 
-    justifyContent: 'center',}}><Text style={{color:'#fff',fontWeight:'bold'}}>Escolher Imagem</Text></View> 
-                        </View>
-                      
-                        </TouchableOpacity>
-          <Card style={styles.card}>
-                
-                  <CardItem >
-                 
-                      <Body >
-                      <Text>Categoria do produto</Text>
-                      
-                          
-                          <TouchableOpacity disabled={!this.state.inputEditable} onPress={() => {this.pickerRef.show()}}>
-                              <View style={{backgroundColor:'#25b',borderRadius:4,padding:5,marginTop:5,alignItems: 'center', 
-                              justifyContent: 'center'}}><Text style={{color:'#fff',fontWeight:'bold'}}>{this.state.nomeCategoria}</Text></View>
-                          </TouchableOpacity>
-
-                        <ReactNativePickerModule
-                          pickerRef={e => this.pickerRef = e}
-                          value={this.state.selectedValue}
-                          title={"Selecionar Categoria"}
-                          items={this.getTodosNomesCategoria()}
-                          onValueChange={(index) => {
-                            this.setState({
-                              selectedValue: index,
-                              nomeCategoria: this.state.nomeCategoria = index
-                            })
-                          console.log(index)
-                        }}/>
-  
-                          
-                          <Text>Status do produto</Text>
-                          <View style={styles.row}>
-                              <View style={styles.inputWrap}>
-                                {this.checkStatus()}
-
-                              </View>
-                              {this.state.isEditing &&
-                              <View style={styles.inputWrap}>
-                                   <Switch   style={{marginTop:5}}
-                                onValueChange={(value)=> this.setState({visivel:this.state.visivel = value})} 
-                                value={ this.state.visivel } 
-                                />
-                                    
-                            
-                               
-                                
-                                
-                              </View>
-                              }
-                              
-                            </View>
-                        
-                          <Text>Nome do Produto</Text>
-                            <Item regular style={styles.input} >
-                              <Input editable={this.state.inputEditable} value={this.state.nome} onChangeText={(nome) => this.setState({nome})} placeholderTextColor="#CCCC"  placeholder="Tomate" keyboardType='ascii-capable'/>
-                            </Item>
-                            
-                            <Text>Unidade Medida </Text>
-                            <Item regular style={styles.input} >
-                              <Input editable={this.state.inputEditable} value={this.state.unidadeMedida} onChangeText={(unidadeMedida) => this.setState({unidadeMedida})} placeholderTextColor="#CCCC"  placeholder="Ex: UN,Kg,L,ML" keyboardType='ascii-capable'/>
-                            </Item>
-                            <Text>Preço</Text>
-                            <Item regular style={styles.input} >
-                              <Input editable={this.state.inputEditable} value={this.state.preco.toString()} onChangeText={(preco) => this.setState({preco})} placeholderTextColor="#CCCC"  placeholder="3.50" keyboardType='numeric' />
-                            </Item>
-                            
-                          
-                           
-                            
-                         
-                      </Body>
-                      
-                      
-                  </CardItem>
-               
-              </Card>    
-    </Content>
-
-
-  );
 }
+
 editar(){
   this.setState({
     isEditing:true,
@@ -476,47 +239,54 @@ editar(){
     inputEditable:true
   })
 }
-    render(){
+render(){
      
      
       return (
-       
+        
             <Container style={{marginLeft:8,marginRight:8}}>
-            
-            <ScrollView>
-            
-
-           <Card>
-              <CardItem header style={{justifyContent:'space-between'}} >
-              
-                <Text style={{fontSize:25,fontWeight:'800'}}>{this.state.title}</Text>
-                {!this.state.primeiroCadastro &&
-                <TouchableOpacity style={{marginLeft:6,marginTop:5,alignItems:'center'}} onPress={() => this.editar()}>
-                  <Icon name="edit"size={20} color="#f63" light />
-                      <Text style={{fontWeight:'bold',color:"#888"}}>Editar</Text>
-                </TouchableOpacity>
-                }
-              </CardItem>
-              {this.renderRow()}
-    
-           </Card>
-           {this.state.isEditing &&
-            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered success onPress={() => this.salvar(this.state.uid,this.state.IDcategoria,this.state.nomeCategoria,this.state.imagem,this.state.nome,this.state.preco,this.state.unidadeMedida,this.state.uidFornecedor,this.state.visivel ) } >
-                <Text style={{fontWeight:'bold',marginLeft:-5}}>Salvar</Text> 
-            </Button>
-           }
-           {!this.state.isEditing && 
-            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered danger onPress={() => this.desativarEndereco() } >
-                <Text style={{fontWeight:'bold',marginLeft:-5}}>Destativar Produto</Text>
-            </Button>
-           }
-           <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered danger onPress={() =>  Firebase.auth().signOut()} >
-                <Text style={{fontWeight:'bold',marginLeft:-5}}>Destativar Produto</Text>
-            </Button>
            
+          
+            <View style={styles.row}>
+                <View style={styles.ButtonWrap}>
+                <Text style={{color:'#fff',marginRight:3,fontWeight:'bold'}}>Pedidos até {this.state.dataPedido}</Text> 
+                    
+                </View>
+                <View style={styles.ButtonWrap2}>
+                {/* <View style={{backgroundColor:'#3b5',borderRadius:8,padding:3,marginLeft:3}}><Text style={{color:'#fff',fontWeight:'bold'}}>GRÁTIS</Text></View> */} 
+                <Text style={{color:'#fff',marginRight:3,fontWeight:'bold'}}>Entregues em {this.state.dataEntrega}</Text> 
+                </View>
+               
+            </View>
+            <ScrollView>
+            <View>
+            {this.renderCalendar()}
+            </View>
             </ScrollView>
+           <View style={{bottom:0,position:'absolute',width:"100%",backgroundColor:"#fff"}}> 
+           <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered danger onPress={() =>  
+                Alert.alert(
+                    'Atenção',
+                    'Deseja realmente sair?',
+                    [
+                      
+                      {
+                        text: 'Cancelar',
+                        onPress: () => console.log('Cancel Pressed'),
+                        style: 'cancel',
+                      },
+                      {text: 'OK', onPress: () => firebase.auth().signOut()},
+                    ],
+                    {cancelable: false},
+                  )
+                } >
+                <Text style={{fontWeight:'bold',marginLeft:-5}}>Sair</Text>
+            </Button>
+           </View>
+          
+           
          </Container>
-       
+      
       );
     }
     
@@ -535,10 +305,28 @@ const styles = StyleSheet.create({
     height:35,
     borderColor: "#BBB"
 },
+ButtonWrap: {
+  justifyContent:'center',
+alignItems:'center',
+width:'50%',
+backgroundColor:'#f22',
+borderBottomStartRadius:16,
+},
+ButtonWrap2: {
+justifyContent:'center',
+alignItems:'center',
+width:'50%',
+backgroundColor:'#383',
+borderBottomEndRadius:16,
+},
 row: {
-  flex: 1,
-  flexDirection: "row",
- 
+  marginTop:0,
+
+  flexDirection: 'row',
+  height:40,
+  borderBottomEndRadius:20,
+  marginLeft:6,
+  marginRight:6
 },
 inputWrap: {
   flex: 1,
