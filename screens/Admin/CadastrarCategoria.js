@@ -28,8 +28,6 @@ import { TouchableHighlight, FlatList, TextInput } from 'react-native-gesture-ha
   
 const db = firebase.firestore() 
 
-const products = [];
-const categorias = [];
 
 export default class CadastrarCategoria extends Component {
   static navigationOptions = {
@@ -57,16 +55,10 @@ export default class CadastrarCategoria extends Component {
     
     this.state = {
       id:"", 
-      categoria:"",
       imagem:"", 
       nome:"",
       
-      inputEditable:false,
-      primeiroCadastro: false,
-      isEditing: false,
-
-      selectedValue: null,
-      categorias:[]
+   
     
   }
  
@@ -76,9 +68,9 @@ export default class CadastrarCategoria extends Component {
   }
   
 componentWillMount(){
- this.getProduto()
- categorias.length = 0
-  
+ 
+ 
+ this.getCategoria() 
 }
 componentDidMount(){
    this.getPermissionAsync();
@@ -140,7 +132,7 @@ uploadImage = async (uri, imageName) =>{
 
 }
 
-getProduto(){
+getCategoria(){
   const {params} = this.props.navigation.state;
   const item = params ? params.item: null;
 
@@ -165,62 +157,24 @@ getProduto(){
 
 
 }
-desativarEndereco(){
-  const {navigation} = this.props;
-  db.collection("Produtos").doc(this.state.uid).update({
-    visivel:false
 
-    })
-    .then(function() {
-      Alert.alert(":)","Desativado com sucesso!")
-      navigation.goBack()
-    })
-    .catch(function(error) {
-     
-      Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
-    });
-    
-}
-salvar=(uid,IDcategoria,nomeCategoria,imagem,nome,preco,unidadeMedida,uidFornecedor,visivel)=>{
+salvar=(nome,imagem)=>{
   var user = firebase.auth().currentUser 
   const {navigation} = this.props;
   const {params} = this.props.navigation.state;
   const item = params ? params.item: null;
   if(nome==""){
     Alert.alert("Oops!","O campo Nome não pode ser vazio")
-  }else if(unidadeMedida == ""){
-    Alert.alert("Oops!","O campo Unidade de Medida não pode ser vazio")
-  }else if(preco == ""){
-    Alert.alert("Oops!","O campo de preço não pode ser vazio")
-  }else if(this.state.nomeCategoria ==="Selecionar"){
-    Alert.alert("Oops!","Selecione uma categoria para o produto")
   }else{
-    var precoDouble = parseFloat(preco.replace(",","."))
-    for(index = 0; index<this.state.categorias.length;index++){
-     
-      if(this.state.categorias[index].nome === this.state.nomeCategoria) {
-        console.log("existe")
-        console.log("ID velho",IDcategoria)
-        console.log("ID novo",this.state.categorias[index].id)
-        IDcategoria = this.state.categorias[index].id
-      }
-      else {
-        // does exist
-        console.log("N existe")
-      }
-    }
    
     
     if(item){
-      console.log("ID:",IDcategoria)
-      db.collection("Produtos").doc(item.uid).update({
-        IDcategoria: IDcategoria,
+      
+      db.collection("Categorias").doc(item.id).update({
+       
         imagem: imagem,
         nome: nome,
-        preco: precoDouble,
-        uidFornecedor:uidFornecedor,
-        unidadeMedida: unidadeMedida,
-        visivel: visivel
+      
   
         })
         .then(function() {
@@ -232,14 +186,11 @@ salvar=(uid,IDcategoria,nomeCategoria,imagem,nome,preco,unidadeMedida,uidFornece
           Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
         });
     }else{
-      db.collection("Produtos").doc().set({
-        IDcategoria: IDcategoria,
+      db.collection("Categorias").doc().set({
+      
         imagem: imagem,
         nome: nome,
-        preco: precoDouble,
-        uidFornecedor:user.uid,
-        unidadeMedida: unidadeMedida,
-        visivel: visivel
+        
   
         })
         .then(function() {
@@ -251,7 +202,7 @@ salvar=(uid,IDcategoria,nomeCategoria,imagem,nome,preco,unidadeMedida,uidFornece
           Alert.alert("Oops","ocorreu um erro ao salvar"+ error);
         });
     }
-        
+    
           
       
       
@@ -310,13 +261,7 @@ renderRow(){
 
   );
 }
-editar(){
-  this.setState({
-    isEditing:true,
-    title:'Editar',
-    inputEditable:true
-  })
-}
+
     render(){
      
      
@@ -339,7 +284,7 @@ editar(){
     
            </Card>
            
-            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered success onPress={() => this.salvar(this.state.uid,this.state.IDcategoria,this.state.nomeCategoria,this.state.imagem,this.state.nome,this.state.preco,this.state.unidadeMedida,this.state.uidFornecedor,this.state.visivel ) } >
+            <Button style={{justifyContent:'center',margin:10, marginHorizontal:'20%'}} bordered success onPress={() => this.salvar(this.state.nome,this.state.imagem) } >
                 <Text style={{fontWeight:'bold',marginLeft:-5}}>Salvar</Text> 
             </Button>
           
@@ -420,11 +365,8 @@ inputWrap: {
   cardImage:{
       height: 55,
       width: 55,
-      borderRadius: 5,
+     
     
-    marginRight:8,
-    marginLeft:-8, 
-    resizeMode: 'contain'
   },
    cardProdImage:{
       height: 165,

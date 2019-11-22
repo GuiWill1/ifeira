@@ -1,5 +1,5 @@
 import React,{Component}from 'react';
-import { Container, Header, Content, Card, CardItem, Text, Body, Button} from 'native-base';
+import { Container, Header, Content, Card, CardItem, Text, Body, Button,List, ListItem, Left, Right, Thumbnail} from 'native-base';
 import {
   SafeAreaView,
   StyleSheet,
@@ -10,8 +10,18 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  Linking
+  Linking,
+  Dimensions,
+  SectionList
 } from 'react-native';
+import {
+  LineChart,
+  BarChart,
+  PieChart,
+  ProgressChart,
+  ContributionGraph,
+  StackedBarChart
+} from "react-native-chart-kit";
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import firebase from 'firebase';
 import '@firebase/firestore';
@@ -22,13 +32,13 @@ import { TouchableHighlight, FlatList } from 'react-native-gesture-handler';
   
 const db = firebase.firestore() 
 const products = [];
-
+const itensPedido = []
 
 
 export default class Relatorios extends Component {
   static navigationOptions = {
     
-    headerTitle: 'Meus Pedidos',
+    headerTitle: 'Relatorios',
    
     mode:'modal',
     ...Platform.select({
@@ -62,16 +72,28 @@ export default class Relatorios extends Component {
       valorTotal:0.0,
       quantidadeTotal:0,
       
-      refresh:false
+      refresh:false,
+
+      startDate: new Date(2019,11,20),
+      endDate: "",
+
+      seg:0,
+      ter:0,
+      qua:0,
+      qui:0,
+      sex:0,
+      sab:0,
+      dom:0,
       
   }
   
-  this.renderRow = this.renderRow.bind(this);
+  this.renderChart = this.renderChart.bind(this);
 
   }
   
 componentWillMount(){
     products.length = 0
+    
    
 }
 componentDidMount(){
@@ -82,7 +104,7 @@ componentDidMount(){
 getItens(){
     var user = firebase.auth().currentUser 
        
-  db.collection("Pedidos").where("idCliente","==",user.uid).where("finalizado",'==',false).orderBy("dataHora",'desc').onSnapshot(snapshot =>{
+  db.collection("Pedidos").where("finalizado",'==',true).orderBy("dataHora",'desc').startAt(new Date(2019,11,22)).endAt(Date.now()).onSnapshot(snapshot =>{
       let changes = snapshot.docChanges();
       
         changes.forEach(change =>{
@@ -92,7 +114,7 @@ getItens(){
               const idVenda =  change.doc.id;
               
               products.push({idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco});
-            
+              itensPedido.push(itens)
             
           }else if(change.type == 'modified'){
        
@@ -121,7 +143,7 @@ getItens(){
        }else{
          this.setState({noItem:false})
        }
-       console.log("ARRAYPROD:",products.length)
+       
        
       this.setState({
        
@@ -129,9 +151,9 @@ getItens(){
           refresh:true
       })
       
-      console.log("STATEPROD:",this.state.data.length)
-
-      
+      //console.log("STATEPROD:",itensPedido[0])
+      this.totalVendas(itensPedido)
+      this.formatedDate(products)
       
   })
  
@@ -152,7 +174,7 @@ NoItems(){
         
       />
           </View>
-          <Text style={{fontWeight:'700', fontSize:23,marginTop:5}}>Você ainda não fez pedidos</Text>
+          <Text style={{fontWeight:'700', fontSize:23,marginTop:5}}>Você ainda não possui pedidos</Text>
       </View>
 
       
@@ -161,243 +183,183 @@ NoItems(){
 
 }
 formatedDate(item){
-  //var Fulldata = item.dataHora.toDate().toLocaleString()
-  var data = item.dataHora.toDate().toLocaleString("en-GB") 
-  //var hora = item.dataHora.toDate().toLocaleTimeString()
-  //console.log(Fulldata)
+  //console.log(item)
+  var options = {  weekday: 'short'};
   
-  return(
-      
-    <Content>
-    <Text style={{margin:6}}>
-    Data do pedido: {data}                
-    </Text>
-
-    </Content>               
-
-                   
-);
-}
-iconStatus(item){
-  
-  var status = item.status["status"]
-  var statusMsg = item.status["mensagem"]
-
-  
-  
-  if(status === "EM_ESPERA"){
-    return(
-      
-         <Content>
-          <View style={styles.row}>
-            <View style={styles.ImageWrap}>
-              <Image style={styles.cardImage}
-                source={require('../../assets/images/aguardando.png')}/>
-            </View>
-            
-            <View style={styles.StatusWrap}>
-              <Text style={{fontWeight: 'bold',
-                fontSize:20, color:'#1A8DD5'}}>
-                {statusMsg}                
-              </Text>
-            </View>      
-          </View>
-         </Content>               
-     
-                        
-    );
-  }else if (status === "APROVADO"){
-    return(
-      <Content>
-          <View style={styles.row}>
-            <View style={styles.ImageWrap}>
-              <Image style={styles.cardImage}
-                source={require('../../assets/images/aprovado.png')}/>
-            </View>
-            
-            <View style={styles.StatusWrap}>
-              <Text style={{fontWeight: 'bold',
-                fontSize:20, color:'#383'}}>
-                {statusMsg}                
-              </Text>
-            </View>      
-          </View>
-          <View style={{backgroundColor:'#3b5',borderRadius:8,padding:3,marginLeft:3,alignItems:'center'}}>
-            <Text style={{color:'#fff',fontWeight:'bold'}}>ENTREGA EM: 20/10/2019</Text>
-          </View>
-        </Content>   
-     
-                        
-    );
-  }else if (status === "CANCELADO"){
-    return(
-     
-            <Content>
-               <View style={styles.row}>
-                 <View style={styles.ImageWrap}>
-                   <Image style={styles.cardImage}
-                     source={require('../../assets/images/cancelado.png')}/>
-                 </View>
-                 
-                 <View style={styles.StatusWrap}>
-                   <Text style={{fontWeight: 'bold',
-                     fontSize:20, color:'#FF2222'}}>
-                     {statusMsg}                
-                   </Text>
-                 </View>      
-               </View>
-            </Content>           
-    );
-  }
-  
-}
-sendOnWhatsApp=(item) => {
-  let msg = ""
-  let mobile = "64984355491" 
-  itensMsg = ""
-  itens = item.itens
-  console.log(item.itens)
-  for(let i in itens){
-    console.log(itens[i].nomeProduto)
-    itensMsg += itens[i].quantidade+" X "+itens[i].nomeProduto+"\n"
-
-    //idProduto,nomeProduto,unidadeMedida, precoUnitario,quantidade,imagem
-  }
-
-  db.collection("Cliente").doc(item.idCliente).get()
-  .then(function(snap){
-    
-    const {email,nome,sobrenome,telefone1,telefone2} = snap.data();
-    msg = "-----DADOS DO CLIENTE-----"+
-          "\nNome do Cliente:"+nome+" "+sobrenome+
-          "\nEmail: "+email+
-          "\nTelefone 1: "+telefone1+"\nTelefone 2: "+telefone2+
-          "\n-----DADOS DO PEDIDO-----"+
-          "\nData do pedido: "+item.dataHora.toDate().toLocaleString("en-GB")+
-          "\nValor total: R$"+item.valorTotal.toFixed(2).replace(".",",")+
-          "\nQuantidade de itens: "+item.qtdTotal+
-          "\nStatus: "+item.status["mensagem"]+
-          '\n-----ITENS DO PEDIDO-----\n'+itensMsg
-    //console.log("Nome: "+nome+" "+sobrenome+"\nEmail: "+email+"\nTelefone 1: "+telefone1+"\nTelefone2: "+telefone2)
-    console.log(msg)
-    if(mobile){
-      if(msg){
-        let url = 'whatsapp://send?text=' + msg + '&phone=55' + mobile;
-        Linking.openURL(url).then((data) => {
-          console.log('WhatsApp Opened');
-        }).catch(() => {
-          Alert.alert("Oops!",'Parece que você não tem whatsapp instalado no seu celular');
-        });
-      }else{
-        alert('Please insert message to send');
-      }
-    }else{
-      alert('Please insert mobile no');
+  for(let i in products){
+    var data = item[i].dataHora.toDate().toLocaleString("pt-BR",options)
+    console.log(data)
+    if(data === 'seg'){
+      this.setState({
+        seg: this.state.seg +=1
+      })
+    }else if(data === 'ter'){
+      this.setState({
+        ter: this.state.ter +=1
+      })
+    }else if(data === 'qua'){
+      this.setState({
+        qua: this.state.qua +=1
+      })
+    }else if(data === 'qui'){
+      this.setState({
+        qui: this.state.qui +=1
+      })
+    }else if(data === 'sex'){
+      this.setState({
+        sex: this.state.sex +=1
+      })
+    }else if(data === 'sab'){
+      this.setState({
+        sab: this.state.sab +=1
+      })
+    }else if(data === 'dom'){
+      this.setState({
+        dom: this.state.dom +=1
+      })
     }
-  }).catch(function(error){
-
-  })
-  
-  
- 
-}
-visualizar(item){
-  msg = ""
-  itens = item.itens
-  console.log(item.itens)
-  for(let i in itens){
-    console.log(itens[i].nomeProduto)
-    msg += itens[i].quantidade+" X "+itens[i].nomeProduto+"\n"
-
-    //idProduto,nomeProduto,unidadeMedida, precoUnitario,quantidade,imagem
   }
-  Alert.alert("Itens do pedido",msg)
+  
+  
+  
 }
-renderRow(item){
+
+totalVendas(item){
+  
+  msg = ""
+  var valorTotal = 0.0
+  var qtdTotal = 0
+for(let i in products){
+  qtdTotal += products[i].qtdTotal
+  valorTotal+= products[i].valorTotal
+}
+this.setState({
+  quantidadeTotal : qtdTotal,
+  valorTotal: valorTotal
+})
+  /*
+ 
+  for(let i in item){
+    
+    console.log(item[i][0].qtdTotal)
+    msg += item[i][0].quantidade+" X "+item[i][0].nomeProduto+"\n"
+    
+    
+  }
+  Alert.alert("Itens do pedido",msg)*/
+}
+renderChart(){
   return(
      
     
           
-          <Card style={styles.card}>
-                
-                  <CardItem >
-                    
-                  
-                      <Body >
-                      {this.iconStatus(item)}
-                      {this.formatedDate(item)}
-                          
-                          <Text style={{marginLeft:6,marginTop:0}}>
-                            Quantidade de itens: {item.qtdTotal}
-                          </Text>
-                          <Text style={{marginLeft:6,marginTop:0}}>Endereço: {item.endereco["nomeLocal"]}</Text>
-                          <Text style={styles.postPrice}>Valor Total: R${item.valorTotal.toFixed(2).replace(".",",")}</Text>
-                          
-                      </Body>
-                      
-                      
-                  </CardItem>
-                  <CardItem footer style={{borderBottomStartRadius:8,borderBottomEndRadius:8,height:53,backgroundColor:'#3e64ff'}}>
-                    <View style={styles.footerRow}>
-                      <View style={{flex:1,width:'60%'}}>
-                        <TouchableOpacity style={{marginLeft:-16,backgroundColor:'#3f3fff',padding:5,height:53,alignItems:'center',borderBottomEndRadius:30,borderBottomStartRadius:8}} onPress={() => this.sendOnWhatsApp(item)}>
-                            <Image style={{width:25,height:25}}
-                              source={require('../../assets/images/whatsapp.png')}/>
-                               <Text style={{fontWeight:'bold',color:'#fff'}}>Contatar Vendedor</Text>
-                          </TouchableOpacity>
-                      </View>
-                      <View style={styles.footertWrap}>
-                        <Button transparent  onPress={() => {
-                            this.visualizar(item)}}>
-                              <Text style={{fontWeight:'bold',color:"#fff",marginTop:8}}>Visualizar</Text>
-                             <Icon style={{marginTop:11}} name="arrow-right"size={20} color="#fff" light />
-                          </Button>
-                          
-                      </View>
-                    </View>
-
-                  </CardItem>
-              </Card>    
+<View>
+  <Text style={{fontSize:20,fontWeight:'800',marginLeft:5,marginTop:5,color:"#666"}}>Pedidos por semana</Text>
+  <LineChart
+    data={{
+      labels: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab","Dom"],
+      datasets: [
+        {
+          data: [
+            this.state.seg,
+            this.state.ter,
+            this.state.qua,
+            this.state.qui,
+            this.state.sex,
+            this.state.sab,
+            this.state.dom
+          ]
+        }
+      ]
+    }}
+    width={Dimensions.get("window").width-30} // from react-native
+    height={220}
+    yAxisLabel={""}
+    yAxisSuffix={""}
+    chartConfig={{
+      backgroundColor: "#e26a00",
+      backgroundGradientFrom: "#fb8c00",
+      backgroundGradientTo: "#ffa726",
+      decimalPlaces: 0, // optional, defaults to 2dp
+      color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+      labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+      style: {
+        borderRadius: 16
+      },
+      propsForDots: {
+        r: "6",
+        strokeWidth: "2",
+        stroke: "#ffa726"
+      }
+    }}
+    bezier
+    style={{
+      marginVertical: 8,
+      borderRadius: 16
+    }}
+  />
+</View>
 
 
 
   );
 }
-    render(){
+
+render(){
       const columns = 1;
      
       return (
-       
-      
-              
-        
-          
-          
-         
-            <Container style={{marginLeft:8,marginRight:8}}>
-            
-         
-            
-           
-            {this.state.noItem && this.NoItems()}
-              {!this.state.noItem &&  <FlatList 
-                          style={styles.list}
-                          data={this.state.data}
-                          keyExtractor={item => item.idProduto}
-                          numColumns={1}
-                          renderItem={({item}) => {
-                            
-                              return (this.renderRow(item))
-                              
-                                  
-                          
-                          }
-                          }
-                      />
-              }
 
-           
-         </Container>
+            <Container style={{marginLeft:8,marginRight:8}}>
+              <ScrollView>
+                {this.renderChart()}
+                
+                <Card>
+                  <CardItem>
+                    <Text style={{fontSize:20,fontWeight:'800',color:"#666"}}>Dados das Vendas</Text>
+                  </CardItem>
+                  <List>
+                    <ListItem avatar>
+                      <Left>
+                        <Image style={{height:40,width:40}} l source={require('../../assets/images/vendas.png')} />
+                      </Left>
+                      <Body>
+                        <Text style={{fontSize:18,fontWeight:'bold'}}>Total de Vendas</Text>
+                        <Text note>Total de vendas realizadas do no período</Text>
+                      </Body>
+                      <Right>
+                        <Text style={{fontWeight:'600',marginTop:18}} >{this.state.data.length} Vendas</Text>
+                      </Right>
+                    </ListItem>
+                    <ListItem avatar >
+                      <Left>
+                        <Image style={{height:40,width:40}}   source={require('../../assets/images/itens.png')} />
+                      </Left>
+                      <Body>
+                        <Text style={{fontSize:18,fontWeight:'bold'}}>Produtos Vendidos</Text>
+                        <Text note>Total de produtos vendidos no período</Text>
+                      </Body>
+                      <Right>
+                        <Text style={{fontWeight:'600',marginTop:18}} >{this.state.quantidadeTotal} UN</Text>
+                      </Right>
+                    </ListItem>
+                    <ListItem avatar>
+                      <Left>
+                        <Image style={{height:40,width:40}} source={require('../../assets/images/valorVendas.png')} />
+                      </Left>
+                      <Body>
+                        <Text style={{fontSize:18,fontWeight:'bold'}}>Valor Total</Text>
+                        <Text note>Valor total de todas as vendas no período</Text>
+                      </Body>
+                      <Right>
+                        <Text style={{fontWeight:'600',marginTop:18}} >R${this.state.valorTotal.toFixed(2).replace(".",",")}</Text>
+                      </Right>
+                    </ListItem>
+                  </List>
+                </Card>
+              </ScrollView>
+         
+            </Container>
        
       );
     }
@@ -406,6 +368,20 @@ renderRow(item){
 }
 
 const styles = StyleSheet.create({
+  sectionHeader: {
+    paddingTop: 2,
+    paddingLeft: 10,
+    paddingRight: 10,
+    paddingBottom: 2,
+    fontSize: 20,
+    fontWeight: 'bold',
+    backgroundColor: 'rgba(247,247,247,1.0)',
+  },
+  item: {
+    padding: 10,
+    fontSize: 18,
+    height: 44,
+  },
   row: {
     marginTop:0,
 

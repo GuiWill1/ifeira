@@ -119,7 +119,7 @@ getData = () =>{
 getItens(){
     var user = firebase.auth().currentUser 
        
-  db.collection("Pedidos").where("idCliente","==",user.uid).where("finalizado",'==',false).orderBy("dataHora",'desc').onSnapshot(snapshot =>{
+  db.collection("Pedidos").where("idCliente","==",user.uid).orderBy("dataHora",'desc').onSnapshot(snapshot =>{
       let changes = snapshot.docChanges();
       
         changes.forEach(change =>{
@@ -199,7 +199,7 @@ NoItems(){
 }
 formatedDate(item){
   //var Fulldata = item.dataHora.toDate().toLocaleString()
-  var data = item.dataHora.toDate().toLocaleString("en-GB") 
+  var data = item.dataHora.toDate().toLocaleString("pt-BR") 
   //var hora = item.dataHora.toDate().toLocaleTimeString()
   //console.log(Fulldata)
   
@@ -310,7 +310,7 @@ sendOnWhatsApp=(item) => {
           "\nEmail: "+email+
           "\nTelefone 1: "+telefone1+"\nTelefone 2: "+telefone2+
           "\n-----DADOS DO PEDIDO-----"+
-          "\nData do pedido: "+item.dataHora.toDate().toLocaleString("en-GB")+
+          "\nData do pedido: "+item.dataHora.toDate().toLocaleString("pt-BR")+
           "\nValor total: R$"+item.valorTotal.toFixed(2).replace(".",",")+
           "\nQuantidade de itens: "+item.qtdTotal+
           "\nStatus: "+item.status["mensagem"]+

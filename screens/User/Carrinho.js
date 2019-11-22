@@ -60,23 +60,29 @@ export default class Carrinho extends Component {
       valorTotal:0.0,
       quantidadeTotal:0,
 
+      dataHora: "",
+
       semEndereco:false,
       enderecos:[],
       endereco: "",
       enderecoSelected: false,
       enderecoSalvar:{},
 
+      dataEntrega:"",
+      dataPedido:"",
+
       modalVisible:false
   }
  
   this.renderRow = this.renderRow.bind(this);
+  this.finalizarPedido = this.finalizarPedido.bind(this)
   
   }
   
 componentWillMount(){
     products.length = 0,
     enderecos.length = 0
-    
+    this.getData()
 }
 
 componentDidMount(){
@@ -110,6 +116,39 @@ NoItems(){
   );
 
 
+}
+getData = () =>{
+  
+  db.collection("Data").where("id",'==',"fZXB3tPb9fJ2jZy04Zj4").onSnapshot(snapshot =>{
+    //"fZXB3tPb9fJ2jZy04Zj4"
+    let changes = snapshot.docChanges();
+    
+    changes.forEach(change =>{
+        if(change.type == 'added'){
+          console.log("Endereco add")
+            const {dataEntrega,dataPedido} = change.doc.data();
+            const id =  change.doc.id;
+            this.setState({
+              "dataEntrega": this.state.dataEntrega = dataEntrega,
+              "dataPedido": this.state.dataPedido = dataPedido
+            })
+            
+            
+            console.log(change.doc.data())
+          
+        }else if(change.type == 'modified'){
+          console.log("Endereco modified")
+          const {dataEntrega,dataPedido} = change.doc.data();
+            const id =  change.doc.id;
+            this.setState({
+              "dataEntrega": this.state.dataEntrega = dataEntrega,
+              "dataPedido": this.state.dataPedido = dataPedido
+            })
+            
+            console.log(change.doc.data())
+        }
+    })
+  })
 }
 getEndereco(){
   var user = firebase.auth().currentUser 
@@ -202,9 +241,18 @@ getItens(){
             
           }else if(change.type == 'modified'){
              
-            const { nomeProduto,unidadeMedida, precoUnitario,quantidade,imagem} = change.doc.data();
+
+              console.log("modificou")
+              const { nomeProduto,unidadeMedida, precoUnitario,quantidade,imagem} = change.doc.data();
               const idProduto =  change.doc.id;
-              products.push({ idProduto,nomeProduto,unidadeMedida, precoUnitario,quantidade,imagem});
+
+              for (let i in products) {
+                if(products[i].idProduto === change.doc.id){
+                 
+                    products[i] = { idProduto,nomeProduto,unidadeMedida, precoUnitario,quantidade,imagem}
+                  
+               }
+              }
 
           }
       });
@@ -361,13 +409,17 @@ renderModal(){
   </Modal>  
   )
 }
-
+limparCarrinho = () =>{
+  products.length = 0
+  this.setState({"data":this.state.data = [],"noItem": this.state.noItem = true,"enderecoSelected":this.state.enderecoSelected = false})
+}
 finalizarPedido = async() =>{
   const {navigation} = this.props;
   var user = firebase.auth().currentUser
-  var dataHora = ""
-  dataHora = await firebase.firestore.FieldValue.serverTimestamp()
-  console.log("DATA:",dataHora)
+  var self = this
+  dataHora = firebase.firestore.FieldValue.serverTimestamp()
+  
+  //console.log("DATA:",dataHora)
   idCliente = user.uid,
   idFornecedor = "",
   itens = this.state.data,
@@ -379,7 +431,7 @@ finalizarPedido = async() =>{
     alert("Erro ao pegar data")
   }else{
     //console.log(itens)
- 
+  
   db.collection("Pedidos").doc().set({
     dataHora: dataHora,
     itens: itens,
@@ -395,9 +447,10 @@ finalizarPedido = async() =>{
 
   }).then(function(){
     console.log("Salvo!")
-  
+    
     db.collection("Cliente").doc(user.uid).collection("Carrinho").get()
     .then(function(snap){
+      
       snap.forEach(Element=>{
         Element.ref.delete();
 
@@ -405,13 +458,14 @@ finalizarPedido = async() =>{
         //navigation.popToTop()
        
       })
+      
        Alert.alert(
       'Pedido realizado com sucesso!',
       "Acompanhe o andamento em 'Meus Pedidos'",
       [
         
         
-        {text: 'Ok', onPress: () =>  navigation.goBack() },
+        {text: 'Ok', onPress: () => self.limparCarrinho() },//navigation.goBack() },
       ],
       {cancelable: false},
     );
@@ -523,12 +577,12 @@ renderRow(item){
             <Container style={{marginLeft:8,marginRight:8}}>
             <View style={styles.row}>
                 <View style={styles.ButtonWrap}>
-                <Text style={{color:'#fff',marginRight:3,fontWeight:'bold'}}>Pedidos até 16/10</Text> 
+                <Text style={{color:'#fff',marginRight:3,fontWeight:'bold'}}>Pedidos até {this.state.dataPedido}</Text> 
                     
                 </View>
                 <View style={styles.ButtonWrap2}>
                 {/* <View style={{backgroundColor:'#3b5',borderRadius:8,padding:3,marginLeft:3}}><Text style={{color:'#fff',fontWeight:'bold'}}>GRÁTIS</Text></View> */} 
-                <Text style={{color:'#fff',marginRight:3,fontWeight:'bold'}}>Entregues em 20/10</Text> 
+                <Text style={{color:'#fff',marginRight:3,fontWeight:'bold'}}>Entregues em {this.state.dataEntrega}</Text> 
                 </View>
                 
             </View>

@@ -28,21 +28,22 @@ export default class Categorias extends Component {
     
     constructor(props){
         super(props);
-     
+        this.getItens()
         this.state = {
             navigation: this.props.navigation,
-            data:[]
+            data:[],
+            refresh:false
         }
         this.renderRow = this.renderRow.bind(this);
         this.pressRow = this.pressRow.bind(this);
         
-        this.getItens()
+        
        
         
     }
     componentWillMount(){
      products.length = 0
-        
+     
         
     }
     goToProdutos = (item)=>{
@@ -57,19 +58,27 @@ export default class Categorias extends Component {
             let changes = snapshot.docChanges();
             changes.forEach(change =>{
                 if(change.type == 'added'){
+                    console.log("Adicionou")
                     const { imagem, nome} = change.doc.data();
                     const id =  change.doc.id;
                     products.push({ id, imagem, nome});
                 }else if(change.type == 'modified'){
-                   
-                   const { imagem, nome} = change.doc.data();
+                    console.log("modificou")
+                    const { imagem, nome} = change.doc.data();
                     const id =  change.doc.id;
-                    products.push({ id, categoria,imagem, nome});
+                    for (let i in products) {
+                        if(products[i].id === change.doc.id){
+                         
+                            products[i] = { id,imagem, nome}
+                          
+                       }
+                      }
                 }
             });
             this.setState({
              
-                data: this.state.data = products
+                data: this.state.data = products,
+                refresh:true
             })
             
              
@@ -132,7 +141,7 @@ export default class Categorias extends Component {
     return (
         <SafeAreaView>
             <ScrollView style={{height:'100%'}}>
-            <Button  style={styles.buttonCat} iconLeft onPress={()=>{this.props.navigation.navigate('CadastrarCategoria')}} >
+            <Button  style={{marginHorizontal:'20%',marginTop:5}} iconLeft onPress={()=>{this.props.navigation.navigate('CadastrarCategoria')}} >
                             <Icon name='grid' />
                         <Text style={{fontWeight:'bold'}}> Cadastrar Categoria</Text>
             </Button>
@@ -140,7 +149,8 @@ export default class Categorias extends Component {
             
                <FlatList 
                         contentContainerStyle={styles.list}
-                        data={this.createRows(this.state.data,columns)}
+                        data={this.state.data}//{this.createRows(this.state.data,columns)}
+                        extraData={this.state}                        
                         keyExtractor={item => item.id}
                         numColumns={columns}
                         onPress={()=> alert(item.nome)}
