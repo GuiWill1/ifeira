@@ -136,7 +136,7 @@ SetData = () =>{
   var options = {  month: 'numeric', day: 'numeric' };
   var entrega = this.state.endDate.toLocaleString("pt-BR",options)
   var pedido = this.state.startDate.toLocaleString("pt-BR",options)
-
+  
   var self = this
   
 

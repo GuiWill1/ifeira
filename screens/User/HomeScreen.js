@@ -213,16 +213,13 @@ renderRow(item){
             
         <View style={styles.row}>
                 <View style={styles.ButtonWrap}>
-                    <Button  style={styles.buttonCat} iconLeft onPress={()=>{this.props.navigation.navigate('Categoria')}} >
-                            <Icon name='grid' />
-                        <Text style={{fontWeight:'bold'}}>Categorias</Text>
-                    </Button>
+                    
                     
                 </View>
                 <View style={styles.ButtonWrap}>
                     <Button  style={styles.buttonCat} iconLeft onPress={()=>{this.props.navigation.navigate('Categoria')}} >
                             <Icon name='search' />
-                        <Text style={{fontWeight:'bold'}}>Produtos</Text>
+                        <Text style={{fontWeight:'bold'}}>Categorias</Text>
                     </Button>
                     
                 </View>

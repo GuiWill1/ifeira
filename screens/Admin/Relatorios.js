@@ -27,7 +27,7 @@ import firebase from 'firebase';
 import '@firebase/firestore';
 import { TouchableHighlight, FlatList } from 'react-native-gesture-handler';
 
-
+import ReactNativePickerModule from 'react-native-picker-module'
 
   
 const db = firebase.firestore() 
@@ -71,11 +71,15 @@ export default class Relatorios extends Component {
   
       valorTotal:0.0,
       quantidadeTotal:0,
-      
+      totalVendas:0,
+
       refresh:false,
 
       startDate: new Date(2019,11,20),
       endDate: "",
+
+      dataSelected: "Selecionar data",
+      datasFiltro:[],
 
       seg:0,
       ter:0,
@@ -104,7 +108,7 @@ componentDidMount(){
 getItens(){
     var user = firebase.auth().currentUser 
        
-  db.collection("Pedidos").where("finalizado",'==',true).orderBy("dataHora",'desc').startAt(new Date(2019,11,22)).endAt(Date.now()).onSnapshot(snapshot =>{
+  db.collection("Pedidos").where("finalizado",'==',true).orderBy("dataHora",'desc').onSnapshot(snapshot =>{
       let changes = snapshot.docChanges();
       
         changes.forEach(change =>{
@@ -115,6 +119,7 @@ getItens(){
               
               products.push({idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco});
               itensPedido.push(itens)
+              
             
           }else if(change.type == 'modified'){
        
@@ -126,6 +131,7 @@ getItens(){
                 console.log("MOdificou")
                 console.log("IDPROD:",products[i].idVenda + "\n IDDOC:",change.doc.id)
                 products[i] = {idVenda,dataHora,finalizado, idCliente,itens,qtdTotal,status,valorTotal,endereco}
+                
              }
             }
           }else if(change.type == 'removed'){
@@ -146,7 +152,7 @@ getItens(){
        
        
       this.setState({
-       
+          
           data: this.state.data = products,
           refresh:true
       })
@@ -154,7 +160,7 @@ getItens(){
       //console.log("STATEPROD:",itensPedido[0])
       this.totalVendas(itensPedido)
       this.formatedDate(products)
-      
+      this.getAllDates()
   })
  
 }
@@ -182,40 +188,120 @@ NoItems(){
 
 
 }
+getAllDates(){
+  var options = {  month: 'numeric', day: 'numeric' };
+  var datas = []
+  for(let i in products){
+    var data = products[i].dataHora.toDate().toLocaleString("pt-BR",options)
+    var dia = products[i].dataHora.toDate().getDay()
+    if(!datas.includes(data)){
+      datas.push(data)
+    }
+        
+ 
+    
+   
+  }
+   this.setState({
+      datasFiltro: this.datasFiltro = datas
+    })
+  
+}
+filterDate(dataSelected){
+  
+  var options = {  month: 'numeric', day: 'numeric' };
+  var vendas = 0
+  var dia = 0
+
+
+  var valorTotal = 0.0
+  var qtdTotal = 0
+
+  for(let i in products){
+    var data = products[i].dataHora.toDate().toLocaleString("pt-BR",options)
+    var diaSelected = products[i].dataHora.toDate().getDay()
+    if(data === dataSelected){
+      vendas += 1
+      dia = diaSelected
+    
+      qtdTotal += products[i].qtdTotal
+      valorTotal+= products[i].valorTotal
+    }
+    //console.log(products[i].dataHora.toDate().toLocaleString("pt-BR",options))
+  }
+  console.log("vendas"+vendas,dia)
+  this.setState({
+    totalVendas: this.state.totalVendas = vendas,
+    quantidadeTotal : qtdTotal,
+    valorTotal: valorTotal,
+  })
+  if(dia === 0){
+    
+      this.setState({
+        dom: this.state.dom = vendas
+      })
+    }else if(dia === 1){
+      this.setState({
+        seg: this.state.seg = vendas
+      })
+    }else if(dia === 2){
+      this.setState({
+        ter: this.state.ter = vendas
+      })
+    }else if(dia === 3){
+      this.setState({
+        qua: this.state.qua = vendas
+      })
+    }else if(dia === 4){
+      this.setState({
+        qui: this.state.qui = vendas
+      })
+    }else if(dia === 5){
+      this.setState({
+        sex: this.state.sex = vendas
+      })
+    }else if(dia === 6){
+      this.setState({
+        sab: this.state.sab = vendas
+      })
+    }
+}
+
 formatedDate(item){
   //console.log(item)
   var options = {  weekday: 'short'};
-  
+
   for(let i in products){
-    var data = item[i].dataHora.toDate().toLocaleString("pt-BR",options)
-    console.log(data)
-    if(data === 'seg'){
+    var data = item[i].dataHora.toDate().getDay()
+    console.log(item[i].dataHora.toDate().toLocaleString("pt-BR",options))
+  
+    if(data === 0){
+      this.setState({
+        dom: this.state.dom +=1
+      })
+    }else if(data === 1){
       this.setState({
         seg: this.state.seg +=1
       })
-    }else if(data === 'ter'){
+    }else if(data === 2){
       this.setState({
         ter: this.state.ter +=1
       })
-    }else if(data === 'qua'){
+    }else if(data === 3){
       this.setState({
         qua: this.state.qua +=1
       })
-    }else if(data === 'qui'){
+    }else if(data === 4){
       this.setState({
         qui: this.state.qui +=1
       })
-    }else if(data === 'sex'){
+    }else if(data === 5){
       this.setState({
         sex: this.state.sex +=1
       })
-    }else if(data === 'sab'){
+    }else if(data === 6){
       this.setState({
         sab: this.state.sab +=1
-      })
-    }else if(data === 'dom'){
-      this.setState({
-        dom: this.state.dom +=1
       })
     }
   }
@@ -235,7 +321,8 @@ for(let i in products){
 }
 this.setState({
   quantidadeTotal : qtdTotal,
-  valorTotal: valorTotal
+  valorTotal: valorTotal,
+  totalVendas: products.length
 })
   /*
  
@@ -312,6 +399,28 @@ render(){
 
             <Container style={{marginLeft:8,marginRight:8}}>
               <ScrollView>
+           <TouchableOpacity onPress={() => { this.pickerRef.show() }}>
+                <View style={{
+                  backgroundColor: '#25b', borderRadius: 4, padding: 5, marginTop: 5, alignItems: 'center',
+                  justifyContent: 'center'
+                }}><Text style={{ color: '#fff', fontWeight: 'bold' }}>{this.state.dataSelected}</Text></View>
+              </TouchableOpacity>
+
+            <ReactNativePickerModule
+                pickerRef={e => this.pickerRef = e}
+                value={this.state.dataSelected}
+                title={"Selecionar data"}
+                items={this.state.datasFiltro}
+                
+                onValueChange={(index) => {
+                  this.setState({
+                    selectedValue: index,
+                    dataSelected: this.state.dataSelected = index
+                  })
+                  this.filterDate(this.state.dataSelected)
+                  console.log(this.state.dataSelected)
+                }} />
+          
                 {this.renderChart()}
                 
                 <Card>
@@ -328,7 +437,7 @@ render(){
                         <Text note>Total de vendas realizadas do no período</Text>
                       </Body>
                       <Right>
-                        <Text style={{fontWeight:'600',marginTop:18}} >{this.state.data.length} Vendas</Text>
+                        <Text style={{fontWeight:'600',marginTop:18}} >{this.state.totalVendas} Vendas</Text>
                       </Right>
                     </ListItem>
                     <ListItem avatar >
